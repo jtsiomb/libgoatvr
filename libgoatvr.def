@@ -1,0 +1,30 @@
+LIBRARY libgoatvr
+EXPORTS
+	vr_init
+	vr_shutdown
+
+	vr_module_count
+	vr_module_name
+
+	vr_use_module
+	vr_use_module_named
+
+	vr_set_opti
+	vr_set_optf
+	vr_get_opti
+	vr_get_optf
+
+	vr_view_translation
+	vr_view_rotation
+
+	vr_view_matrix
+	vr_proj_matrix
+
+	vr_begin
+	vr_end
+	vr_swap_buffers
+
+	vr_output_texture
+	vr_output_texture_eye
+
+	vr_recenter

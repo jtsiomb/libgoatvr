@@ -1,0 +1,14 @@
+\.o$
+\.d$
+\.swp$
+\.so$
+\.so\.
+\.a$
+\.dll$
+\.lib$
+\.obj$
+\.suo$
+\.sdf$
+\.opensdf$
+^Debug
+^Release
