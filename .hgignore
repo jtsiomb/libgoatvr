@@ -13,3 +13,4 @@
 \.opensdf$
 ^Debug
 ^Release
+^usr

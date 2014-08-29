@@ -60,6 +60,12 @@
       <ModuleDefinitionFile>libgoatvr.def</ModuleDefinitionFile>
       <AdditionalDependencies>opengl32.lib;libovrd.lib;%(AdditionalDependencies);winmm.lib;ws2_32.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>mkdir usr\lib usr\bin usr\include
+copy /y src\vr.h usr\include\goatvr.h
+copy /y $(TargetPath) usr\bin\$(TargetFileName)
+copy /y $(TargetDir)$(TargetName).lib usr\lib\$(TargetName).lib</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -80,6 +86,12 @@
       <ModuleDefinitionFile>libgoatvr.def</ModuleDefinitionFile>
       <AdditionalDependencies>opengl32.lib;libovr.lib;%(AdditionalDependencies);winmm.lib;ws2_32.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>mkdir usr\lib usr\bin usr\include
+copy /y src\vr.h usr\include\goatvr.h
+copy /y $(TargetPath) usr\bin\$(TargetFileName)
+copy /y $(TargetDir)$(TargetName).lib usr\lib\$(TargetName).lib</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\mathutil.c" />
