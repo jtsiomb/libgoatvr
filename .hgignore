@@ -4,6 +4,7 @@
 \.so$
 \.so\.
 \.a$
+^Makefile$
 \.dll$
 \.lib$
 \.obj$
