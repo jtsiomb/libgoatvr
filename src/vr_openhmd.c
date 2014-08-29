@@ -7,7 +7,7 @@
 #include "opt.h"
 
 /* a noble spirit embiggens the framebuffer to avoid aliasing in the middle */
-#define EMBIGGEN	1.5
+#define FB_EMBIGGEN	1.5
 
 static ohmd_context *ctx;
 static ohmd_device *dev;
