@@ -134,6 +134,7 @@ static void cleanup(void)
 		ovrHmd_Destroy(hmd);
 		ovr_Shutdown();
 	}
+	destroy_options(optdb);
 }
 
 static int set_option(const char *opt, enum opt_type type, void *valp)

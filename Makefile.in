@@ -30,7 +30,7 @@ else
 endif
 
 .PHONY: all
-$(all): $(lib_so) $(lib_a)
+all: $(lib_so) $(lib_a)
 
 $(lib_so): $(obj)
 	$(CC) -o $@ $(shared) $(obj) $(LDFLAGS)
