@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <string.h>
+#include "opengl.h"
 #include "vr.h"
 #include "vr_impl.h"
 #include "mathutil.h"
 
 
-static void swap_buffers(void);
+static void fallback_present(void);
 
 
 static struct vr_module *vrm;
@@ -19,9 +20,23 @@ static float fbtex_rect[] = {
 	0, 0, 1, 1
 };
 
+static void *defopt;	/* default options db */
+
+static struct {
+	float umin, umax, vmin, vmax;
+	int tex;
+} rtarg[2];
+
+
 int vr_init(void)
 {
 	int i, nmodules;
+
+	/* create the default options database */
+	if(!defopt && (defopt = create_options())) {
+		set_option_float(defopt, VR_OPT_EYE_HEIGHT, 1.675);
+		set_option_float(defopt, VR_OPT_IPD, 0.064);
+	}
 
 	if(vrm) {
 		vr_shutdown();
@@ -99,6 +114,8 @@ void vr_set_opti(const char *optname, int val)
 {
 	if(vrm && vrm->set_option) {
 		vrm->set_option(optname, OTYPE_INT, &val);
+	} else {
+		set_option_int(defopt, optname, val);
 	}
 }
 
@@ -106,6 +123,8 @@ void vr_set_optf(const char *optname, float val)
 {
 	if(vrm && vrm->set_option) {
 		vrm->set_option(optname, OTYPE_FLOAT, &val);
+	} else {
+		set_option_float(defopt, optname, val);
 	}
 }
 
@@ -113,8 +132,8 @@ int vr_get_opti(const char *optname)
 {
 	int res = 0;
 
-	if(vrm && vrm->get_option) {
-		vrm->get_option(optname, OTYPE_INT, &res);
+	if(!vrm || !vrm->get_option || vrm->get_option(optname, OTYPE_INT, &res) == -1) {
+		get_option_int(defopt, optname, &res);	/* fallback */
 	}
 	return res;
 }
@@ -123,8 +142,8 @@ float vr_get_optf(const char *optname)
 {
 	float res = 0.0f;
 
-	if(vrm && vrm->get_option) {
-		vrm->get_option(optname, OTYPE_FLOAT, &res);
+	if(!vrm || !vrm->get_option || vrm->get_option(optname, OTYPE_FLOAT, &res) == -1) {
+		get_option_float(defopt, optname, &res);	/* fallback */
 	}
 	return res;
 }
@@ -166,6 +185,7 @@ int vr_view_matrix(int eye, float *mat)
 	have_rot = vr_view_rotation(eye, quat);
 
 	if(!have_trans && !have_rot) {
+		memcpy(mat, idmat, sizeof idmat);
 		return 0;
 	}
 
@@ -212,7 +232,8 @@ int vr_swap_buffers(void)
 	}
 
 	if(!res) {
-		swap_buffers();
+		fallback_present();
+		vr_gl_swap_buffers();
 	}
 	return 0;
 }
@@ -229,6 +250,12 @@ void vr_output_texture_eye(int eye, unsigned int tex, float umin, float vmin, fl
 {
 	if(vrm && vrm->set_eye_texture) {
 		vrm->set_eye_texture(eye, tex, umin, vmin, umax, vmax);
+	} else {
+		rtarg[eye].tex = tex;
+		rtarg[eye].umin = umin;
+		rtarg[eye].umax = umax;
+		rtarg[eye].vmin = vmin;
+		rtarg[eye].vmax = vmax;
 	}
 }
 
@@ -239,22 +266,48 @@ void vr_recenter(void)
 	}
 }
 
-
-#ifdef __unix__
-#include <GL/glx.h>
-
-static void swap_buffers(void)
+static void fallback_present(void)
 {
-	glXSwapBuffers(glXGetCurrentDisplay(), glXGetCurrentDrawable());
+	int i;
+
+	glPushAttrib(GL_ENABLE_BIT | GL_TRANSFORM_BIT);
+
+	glDisable(GL_LIGHTING);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_STENCIL_TEST);
+	glDisable(GL_FOG);
+
+	glEnable(GL_TEXTURE_2D);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+
+	for(i=0; i<2; i++) {
+		float x0 = i == 0 ? -1 : 0;
+		float x1 = i == 0 ? 0 : 1;
+
+		glBindTexture(GL_TEXTURE_2D, rtarg[i].tex);
+
+		glBegin(GL_QUADS);
+		glTexCoord2f(rtarg[i].umin, rtarg[i].vmin);
+		glVertex2f(x0, -1);
+		glTexCoord2f(rtarg[i].umax, rtarg[i].vmin);
+		glVertex2f(x1, -1);
+		glTexCoord2f(rtarg[i].umax, rtarg[i].vmax);
+		glVertex2f(x1, 1);
+		glTexCoord2f(rtarg[i].umin, rtarg[i].vmax);
+		glVertex2f(x0, 1);
+		glEnd();
+	}
+
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+
+	glPopAttrib();
 }
-
-#endif
-
-#ifdef WIN32
-#include <windows.h>
-
-static void swap_buffers(void)
-{
-	SwapBuffers(wglGetCurrentDC());
-}
-#endif
