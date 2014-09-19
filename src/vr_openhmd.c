@@ -56,6 +56,7 @@ static int init(void)
 	ohmd_device_geti(dev, OHMD_SCREEN_HORIZONTAL_SIZE, &disp_width);
 	ohmd_device_geti(dev, OHMD_SCREEN_VERTICAL_SIZE, &disp_height);
 	ohmd_device_getf(dev, OHMD_EYE_IPD, &ipd);
+	ipd /= 100.0f; /* convert ipd to meters */
 
 	if((optdb = create_options())) {
 		set_option_int(optdb, VR_OPT_DISPLAY_WIDTH, disp_width);
@@ -104,28 +105,23 @@ static int get_option(const char *opt, enum opt_type type, void *valp)
 	return -1;
 }
 
-static int translation(int eye, float *vec)
+static void translation(int eye, float *vec)
 {
-	float xform[16];
+	/* OpenHMD doesn't support positional tracking, so just return the eye offset */
 
-	view_matrix(eye, xform);
-
-	vec[0] = xform[3];
-	vec[1] = xform[7];
-	vec[2] = xform[11];
-	return 0;
+	vec[0] = (eye == VR_EYE_LEFT ? -ipd : ipd) / 2.0;
+	vec[1] = vec[2] = 0.0f;
 }
 
-static int rotation(int eye, float *quat)
+static void rotation(int eye, float *quat)
 {
 	if(!dev) {
 		quat[0] = quat[1] = quat[2] = 0.0f;
 		quat[3] = 1.0f;
-		return -1;
+		return;
 	}
 
 	ohmd_device_getf(dev, OHMD_ROTATION_QUAT, quat);
-	return 0;
 }
 
 
@@ -136,8 +132,8 @@ static void view_matrix(int eye, float *mat)
 
 static void proj_matrix(int eye, float znear, float zfar, float *mat)
 {
-	ohmd_device_setf(dev, OHMD_PROJECTION_ZNEAR, znear);
-	ohmd_device_setf(dev, OHMD_PROJECTION_ZFAR, zfar);
+	ohmd_device_setf(dev, OHMD_PROJECTION_ZNEAR, &znear);
+	ohmd_device_setf(dev, OHMD_PROJECTION_ZFAR, &zfar);
 	ohmd_device_getf(dev, OHMD_LEFT_EYE_GL_PROJECTION_MATRIX + eye, mat);
 }
 
@@ -166,7 +162,9 @@ static void set_eye_texture(int eye, unsigned int tex, float umin, float vmin, f
 
 static void recenter(void)
 {
-	/* TODO does OHMD support the magnetometer? */
+	/* TODO grab the current rotation quat, invert it, and use it to
+	 * multiply with the rotation quat query results
+	 */
 }
 
 
@@ -180,6 +178,8 @@ struct vr_module *vr_module_openhmd(void)
 		m.cleanup = cleanup;
 		m.set_option = set_option;
 		m.get_option = get_option;
+		m.translation = translation;
+		m.rotation = rotation;
 		m.view_matrix = view_matrix;
 		m.proj_matrix = proj_matrix;
 		m.begin = begin;
@@ -187,6 +187,7 @@ struct vr_module *vr_module_openhmd(void)
 		m.set_eye_texture = set_eye_texture;
 		m.recenter = recenter;
 	}
+	return &m;
 }
 
 #else	/* don't use OpenHMD */

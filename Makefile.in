@@ -11,7 +11,7 @@ ifdef use_libovr
 endif
 ifdef use_openhmd
 	mod_cflags += -DUSE_OPENHMD
-	mod_libs += -lhmd
+	mod_libs += -lopenhmd
 endif
 
 CFLAGS = -pedantic -Wall $(dbg) $(opt) $(pic) $(mod_cflags)
@@ -30,10 +30,16 @@ else
 endif
 
 .PHONY: all
-all: $(lib_so) $(lib_a)
+all: $(lib_so) $(lib_a) $(soname) $(ldname)
 
 $(lib_so): $(obj)
 	$(CC) -o $@ $(shared) $(obj) $(LDFLAGS)
+
+$(soname): $(lib_so)
+	ln -sf $< $@
+
+$(ldname): $(soname)
+	ln -sf $< $@
 
 $(lib_a): $(obj)
 	$(AR) rcs $@ $(obj)
@@ -45,7 +51,7 @@ $(lib_a): $(obj)
 
 .PHONY: clean
 clean:
-	rm -f $(obj) $(bin)
+	rm -f $(obj) $(lib_so) $(lib_a) $(soname) $(ldname)
 
 .PHONY: cleandep
 cleandep: clean

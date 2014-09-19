@@ -162,7 +162,7 @@ static int get_option(const char *opt, enum opt_type type, void *valp)
 	return -1;
 }
 
-static int translation(int eye, float *vec)
+static void translation(int eye, float *vec)
 {
 	if(!hmd) {
 		vec[0] = vec[1] = vec[2] = 0;
@@ -177,7 +177,7 @@ static int translation(int eye, float *vec)
 	return 1;
 }
 
-static int rotation(int eye, float *quat)
+static void rotation(int eye, float *quat)
 {
 	if(!hmd) {
 		quat[0] = quat[1] = quat[2] = 0.0f;
