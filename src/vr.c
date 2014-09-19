@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "opengl.h"
 #include "vr.h"
@@ -31,6 +32,7 @@ static struct {
 int vr_init(void)
 {
 	int i, nmodules;
+	char *vrmod_env;
 
 	/* create the default options database */
 	if(!defopt && (defopt = create_options())) {
@@ -50,14 +52,17 @@ int vr_init(void)
 		if(m->init() != -1) {
 			/* add to the active modules array */
 			vr_activate_module(i);
-			if(!vrm) {
-				vr_use_module(0);
-			}
 		}
 	}
 
-	if(!vrm) {
+	if(!vr_get_num_active_modules()) {
 		return -1;
+	}
+
+	if((vrmod_env = getenv("VR_MODULE"))) {
+		vr_use_module_named(vrmod_env);
+	} else {
+		vr_use_module(0);
 	}
 	return 0;
 }

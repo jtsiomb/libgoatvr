@@ -6,7 +6,11 @@ dbg=true
 use_libovr=true
 use_openhmd=false	# not done
 
+echo "$0 \\" >config.status
+chmod +x config.status
+
 while [ $# != 0 ]; do
+	echo "$1 \\" >>config.status
 	case $1 in
 	--prefix=*)
 		value=`echo $arg | sed 's/--prefix=//'`
@@ -56,6 +60,8 @@ while [ $# != 0 ]; do
 	esac
 	shift
 done
+
+echo >>config.status
 
 echo 'Configuring libgoatvr...'
 echo "  install prefix: $prefix"
