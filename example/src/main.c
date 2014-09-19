@@ -96,8 +96,7 @@ int init(void)
 	update_rtarg(fb_width, fb_height);
 
 	/* set our render texture and its active area */
-	vr_output_texture(fb_tex, 0, (float)(fb_tex_height - fb_height) / (float)fb_tex_height,
-			(float)fb_width / (float)fb_tex_width, 1.0);
+	vr_output_texture(fb_tex, 0, 0, (float)fb_width / (float)fb_tex_width, (float)fb_height / (float)fb_tex_height);
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
