@@ -12,6 +12,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\mathutil.c" />
+    <ClCompile Include="src\mesh.c" />
+    <ClCompile Include="src\opengl.c" />
     <ClCompile Include="src\opt.c" />
     <ClCompile Include="src\rbtree.c" />
     <ClCompile Include="src\vr.c" />
@@ -22,6 +24,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\mathutil.h" />
+    <ClInclude Include="src\mesh.h" />
+    <ClInclude Include="src\opengl.h" />
     <ClInclude Include="src\opt.h" />
     <ClInclude Include="src\rbtree.h" />
     <ClInclude Include="src\vr.h" />
