@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 #include "opengl.h"
 #include "mesh.h"
 
@@ -15,7 +16,7 @@ static float barrel_scale(float rad, const float *k);
 #define GL_STATIC_DRAW			0x88E4
 #endif
 
-#if !defined(GL_VERSION_1_5) || !defined(GL_GLEXT_PROTOTYPES)
+#ifndef GL_VERSION_1_5
 static void (*glGenBuffers)(GLsizei, GLuint*);
 static void (*glDeleteBuffers)(GLsizei, GLuint*);
 static void (*glBufferData)(GLenum, unsigned int, const GLvoid*, GLenum);
@@ -31,6 +32,7 @@ int vrimp_mesh_init(struct mesh *m)
 	m->num_verts = m->num_faces = 0;
 	m->vbo = m->ibo = 0;
 
+#ifndef GL_VERSION_1_5
 	if(!glGenBuffers) {
 		glGenBuffers = vrimp_glfunc("glGenBuffersARB");
 		glDeleteBuffers = vrimp_glfunc("glDeleteBuffersARB");
@@ -42,6 +44,7 @@ int vrimp_mesh_init(struct mesh *m)
 			return -1;
 		}
 	}
+#endif
 
 	return 0;
 }
