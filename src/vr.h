@@ -1,16 +1,18 @@
 #ifndef VR_H_
 #define VR_H_
 
+/* unit: pixels */
 #define VR_OPT_DISPLAY_WIDTH	"display-xres"
 #define VR_OPT_DISPLAY_HEIGHT	"display-yres"
 #define VR_OPT_LEYE_XRES	"left-eye-xres"
 #define VR_OPT_LEYE_YRES	"left-eye-yres"
 #define VR_OPT_REYE_XRES	"right-eye-xres"
 #define VR_OPT_REYE_YRES	"right-eye-yres"
-#define VR_OPT_EYE_HEIGHT	"eye-height"
-#define VR_OPT_IPD			"ipd"
 #define VR_OPT_WIN_XOFFS	"win-xoffset"
 #define VR_OPT_WIN_YOFFS	"win-yoffset"
+/* unit: meters */
+#define VR_OPT_EYE_HEIGHT	"eye-height"
+#define VR_OPT_IPD			"ipd"
 
 enum {
 	VR_EYE_LEFT,

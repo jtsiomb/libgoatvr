@@ -198,9 +198,9 @@ int vr_view_matrix(int eye, float *mat)
 	offs[1] = -offs[1];
 	offs[2] = -offs[2];
 
-	translation_matrix(offs, tmat);
-	rotation_matrix(quat, rmat);
-	mult_matrix(mat, tmat, rmat);
+	vrimp_translation_matrix(offs, tmat);
+	vrimp_rotation_matrix(quat, rmat);
+	vrimp_mult_matrix(mat, tmat, rmat);
 	return 1;
 }
 
@@ -238,7 +238,7 @@ int vr_swap_buffers(void)
 
 	if(!res) {
 		fallback_present();
-		vr_gl_swap_buffers();
+		vrimp_swap_buffers();
 	}
 	return 0;
 }

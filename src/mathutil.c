@@ -6,7 +6,7 @@
 
 static const float idmat[] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-void rotation_matrix(const float *quat, float *matrix)
+void vrimp_rotation_matrix(const float *quat, float *matrix)
 {
 	matrix[0] = 1.0 - 2.0 * quat[1] * quat[1] - 2.0 * quat[2] * quat[2];
 	matrix[1] = 2.0 * quat[0] * quat[1] + 2.0 * quat[3] * quat[2];
@@ -26,10 +26,10 @@ void rotation_matrix(const float *quat, float *matrix)
 	matrix[12] = matrix[13] = matrix[14] = 0.0f;
 	matrix[15] = 1.0f;
 
-	transpose_matrix(matrix);
+	vrimp_transpose_matrix(matrix);
 }
 
-void translation_matrix(const float *vec, float *matrix)
+void vrimp_translation_matrix(const float *vec, float *matrix)
 {
 	memcpy(matrix, idmat, sizeof idmat);
 	matrix[12] = vec[0];
@@ -37,7 +37,7 @@ void translation_matrix(const float *vec, float *matrix)
 	matrix[14] = vec[2];
 }
 
-void mult_matrix(float *dest, const float *m1, const float *m2)
+void vrimp_mult_matrix(float *dest, const float *m1, const float *m2)
 {
 	int i, j;
 	float tmp[16];
@@ -51,7 +51,7 @@ void mult_matrix(float *dest, const float *m1, const float *m2)
 	memcpy(dest, tmp, sizeof tmp);
 }
 
-void transpose_matrix(float *matrix)
+void vrimp_transpose_matrix(float *matrix)
 {
 	int i, j;
 	float tmp[16];
@@ -64,7 +64,7 @@ void transpose_matrix(float *matrix)
 	memcpy(matrix, tmp, sizeof tmp);
 }
 
-void print_matrix(const float *matrix)
+void vrimp_print_matrix(const float *matrix)
 {
 	int i, j;
 

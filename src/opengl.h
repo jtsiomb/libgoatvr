@@ -16,6 +16,8 @@
 #include <GL/glx.h>
 #endif
 
-void vr_gl_swap_buffers(void);
+void vrimp_swap_buffers(void);
+
+void (*vrimp_glfunc(const char *name))();
 
 #endif	/* VR_OPENGL_H_ */
