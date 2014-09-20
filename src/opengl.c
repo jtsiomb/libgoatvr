@@ -23,7 +23,7 @@ void vrimp_swap_buffers(void)
 
 void (*vrimp_glfunc(const char *name))()
 {
-	return wglGetProcAddress(name);
+	return (void (*)())wglGetProcAddress(name);
 }
 #endif	/* WIN32 */
 
