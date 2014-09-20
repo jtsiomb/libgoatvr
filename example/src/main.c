@@ -139,8 +139,8 @@ void toggle_hmd_fullscreen(void)
 void display(void)
 {
 	int i;
-	float proj_mat[16];
-	float rot_mat[16], view_mat[16];
+	float proj_mat[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+	float view_mat[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
 	/* start drawing onto our texture render target */
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -164,7 +164,7 @@ void display(void)
 		 * use glLoadTransposeMatrixf instead of glLoadMatrixf to load it.
 		 */
 		if(vr_proj_matrix(i, 0.5, 500.0, proj_mat)) {
-			glLoadTransposeMatrixf(proj_mat);
+			glLoadMatrixf(proj_mat);
 		} else {
 			glLoadIdentity();
 			gluPerspective(50.0, (float)fb_width / 2.0 / (float)fb_height, 0.5, 500.0);
@@ -176,7 +176,7 @@ void display(void)
 		 */
 		glMatrixMode(GL_MODELVIEW);
 		vr_view_matrix(i, view_mat);
-		glLoadTransposeMatrixf(view_mat);
+		glLoadMatrixf(view_mat);
 		/* move the camera to the eye level of the user */
 		glTranslatef(0, -vr_get_optf(VR_OPT_EYE_HEIGHT), 0);
 

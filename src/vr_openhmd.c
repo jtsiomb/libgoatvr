@@ -27,6 +27,7 @@ static struct {
 static int init(void)
 {
 	int i, num_hmds;
+	float distort_k[6];
 
 	if(!(ctx = ohmd_ctx_create())) {
 		fprintf(stderr, "failed to create OpenHMD context\n");
@@ -68,6 +69,14 @@ static int init(void)
 		set_option_int(optdb, VR_OPT_REYE_XRES, (int)(disp_width / 2.0 * FB_EMBIGGEN));
 		set_option_int(optdb, VR_OPT_REYE_YRES, (int)(disp_height * FB_EMBIGGEN));
 	}
+
+	ohmd_device_getf(dev, OHMD_DISTORTION_K, distort_k);
+	printf("k: %g %g %g   %g %g %g\n", distort_k[0], distort_k[1], distort_k[2],
+			distort_k[3], distort_k[4], distort_k[5]);
+	/* TODO: DK2 returns all zeros here ... maybe we should detect that and switch to
+	 * using the DK2 distortion mesh from the Oculus SDK. I'll have to connect the DK1
+	 * again to finish the barrel distortion method.
+	 */
 
 	return 0;
 }
@@ -184,7 +193,7 @@ struct vr_module *vr_module_openhmd(void)
 		m.proj_matrix = proj_matrix;
 		m.begin = begin;
 		m.present = present;
-		m.set_eye_texture = set_eye_texture;
+		/*m.set_eye_texture = set_eye_texture;*/
 		m.recenter = recenter;
 	}
 	return &m;
