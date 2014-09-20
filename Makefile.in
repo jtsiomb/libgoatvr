@@ -15,25 +15,31 @@ ifdef use_openhmd
 endif
 
 CFLAGS = -pedantic -Wall $(dbg) $(opt) $(pic) $(mod_cflags)
-LDFLAGS = $(mod_libs)
+LDFLAGS = $(mod_libs) $(libgl)
 
 lib_a = lib$(name).a
 ifeq ($(shell uname -s), Darwin)
 	lib_so = lib$(name).dylib
 	shared = -dynamiclib
+	libgl = -framework OpenGL
+
+	ifdef use_libovr
+		mod_libs += -framework Cocoa -framework IOKit
+	endif
 else
 	ldname = lib$(name).so
 	soname = lib$(name).so.$(so_major)
 	lib_so = lib$(name).so.$(so_major).$(so_minor)
 	shared = -shared -Wl,-soname=$(soname)
 	pic = -fPIC
+	libgl = -lGL -lGLU
 endif
 
 .PHONY: all
 all: $(lib_so) $(lib_a) $(soname) $(ldname)
 
 $(lib_so): $(obj)
-	$(CC) -o $@ $(shared) $(obj) $(LDFLAGS)
+	$(CXX) -o $@ $(shared) $(obj) $(LDFLAGS)
 
 $(soname): $(lib_so)
 	ln -sf $< $@

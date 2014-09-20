@@ -5,11 +5,14 @@ bin = test
 vrlib_root = ..
 vrlib = $(vrlib_root)/libgoatvr.so
 
-CFLAGS = -pedantic -Wall -g `pkg-config --cflags sdl2` -I$(vrlib_root)/src
-LDFLAGS = $(libgl) `pkg-config --libs sdl2` -L$(vrlib_root) -lgoatvr -Wl,-rpath=$(vrlib_root)
+warn = -Wall
+
+CFLAGS = -pedantic $(warn) -g `pkg-config --cflags sdl2` -I$(vrlib_root)/src
+LDFLAGS = $(libgl) `pkg-config --libs sdl2` -L$(vrlib_root) -lgoatvr -Wl,-rpath -Wl,$(vrlib_root)/
 
 ifeq ($(shell uname -s), Darwin)
 	libgl = -framework OpenGL -lGLEW
+	warn += -Wno-deprecated-declarations
 else
 	libgl = -lGL -lGLU -lGLEW
 endif

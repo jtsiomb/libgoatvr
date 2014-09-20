@@ -1,12 +1,16 @@
 #ifdef WIN32
 #define OVR_OS_WIN32
 #endif
+#ifdef __APPLE__
+#define OVR_OS_MAC
+#endif
 
 #include "vr_impl.h"
 
 #ifdef USE_LIBOVR
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 #include "opt.h"
 
@@ -30,6 +34,7 @@ static int deferred_init_done;
 static int init(void)
 {
 	int i, num_hmds;
+	int use_fake = 0;
 
 	if(!ovr_Initialize()) {
 		return -1;
@@ -37,15 +42,20 @@ static int init(void)
 	printf("initialized LibOVR %s\n", ovr_GetVersionString());
 
 	if(!(num_hmds = ovrHmd_Detect())) {
-		ovr_Shutdown();
-		return -1;
+		if(getenv("VR_LIBOVR_FAKE")) {
+			use_fake = 1;
+			num_hmds = 1;
+		} else {
+			ovr_Shutdown();
+			return -1;
+		}
 	}
 	printf("%d Oculus HMD(s) found\n", num_hmds);
 
 	hmd = 0;
 	for(i=0; i<num_hmds; i++) {
-		ovrHmd h;
-		if(!(h = ovrHmd_Create(i))) {
+		ovrHmd h = use_fake ? ovrHmd_CreateDebug(ovrHmd_DK2) : ovrHmd_Create(i);
+		if(!h) {
 			break;
 		}
 		printf(" [%d]: %s - %s\n", i, h->Manufacturer, h->ProductName);
@@ -166,15 +176,13 @@ static void translation(int eye, float *vec)
 {
 	if(!hmd) {
 		vec[0] = vec[1] = vec[2] = 0;
-		return 0;
+		return;
 	}
 
 	pose[eye] = ovrHmd_GetEyePose(hmd, eye == VR_EYE_LEFT ? ovrEye_Left : ovrEye_Right);
 	vec[0] = pose[eye].Position.x + eye_render_desc[eye].ViewAdjust.x;
 	vec[1] = pose[eye].Position.y + eye_render_desc[eye].ViewAdjust.y;
 	vec[2] = pose[eye].Position.z + eye_render_desc[eye].ViewAdjust.z;
-
-	return 1;
 }
 
 static void rotation(int eye, float *quat)
@@ -182,7 +190,7 @@ static void rotation(int eye, float *quat)
 	if(!hmd) {
 		quat[0] = quat[1] = quat[2] = 0.0f;
 		quat[3] = 1.0f;
-		return 0;
+		return;
 	}
 
 	pose[eye] = ovrHmd_GetEyePose(hmd, eye == VR_EYE_LEFT ? ovrEye_Left : ovrEye_Right);
@@ -190,7 +198,6 @@ static void rotation(int eye, float *quat)
 	quat[1] = pose[eye].Orientation.y;
 	quat[2] = pose[eye].Orientation.z;
 	quat[3] = pose[eye].Orientation.w;
-	return 1;
 }
 
 static const float idmat[] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
