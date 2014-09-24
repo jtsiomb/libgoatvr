@@ -8,6 +8,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgoatvr_static", "libgoatvr_static.vcxproj", "{DF0FC238-A249-432C-9163-3778DDE78A62}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example", "example\example.vcxproj", "{7A7B8D81-EB77-49DA-B68D-B117C0A4782B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DF0FC238-A249-432C-9163-3778DDE78A62} = {DF0FC238-A249-432C-9163-3778DDE78A62}
+		{6AD69AF8-6F44-4D45-A59C-A7A07F6E1CE0} = {6AD69AF8-6F44-4D45-A59C-A7A07F6E1CE0}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

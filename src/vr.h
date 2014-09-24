@@ -2,17 +2,17 @@
 #define VR_H_
 
 /* unit: pixels */
-#define VR_OPT_DISPLAY_WIDTH	"display-xres"
-#define VR_OPT_DISPLAY_HEIGHT	"display-yres"
-#define VR_OPT_LEYE_XRES	"left-eye-xres"
-#define VR_OPT_LEYE_YRES	"left-eye-yres"
-#define VR_OPT_REYE_XRES	"right-eye-xres"
-#define VR_OPT_REYE_YRES	"right-eye-yres"
-#define VR_OPT_WIN_XOFFS	"win-xoffset"
-#define VR_OPT_WIN_YOFFS	"win-yoffset"
+#define VR_DISPLAY_WIDTH	"display-xres"
+#define VR_DISPLAY_HEIGHT	"display-yres"
+#define VR_LEYE_XRES		"left-eye-xres"
+#define VR_LEYE_YRES		"left-eye-yres"
+#define VR_REYE_XRES		"right-eye-xres"
+#define VR_REYE_YRES		"right-eye-yres"
+#define VR_WIN_XOFFS		"win-xoffset"
+#define VR_WIN_YOFFS		"win-yoffset"
 /* unit: meters */
-#define VR_OPT_EYE_HEIGHT	"eye-height"
-#define VR_OPT_IPD			"ipd"
+#define VR_EYE_HEIGHT		"eye-height"
+#define VR_IPD				"ipd"
 
 enum {
 	VR_EYE_LEFT,
@@ -32,10 +32,10 @@ const char *vr_module_name(int idx);
 int vr_use_module(int idx);
 int vr_use_module_named(const char *name);
 
-void vr_set_opti(const char *optname, int val);
-void vr_set_optf(const char *optname, float val);
-int vr_get_opti(const char *optname);
-float vr_get_optf(const char *optname);
+void vr_seti(const char *optname, int val);
+void vr_setf(const char *optname, float val);
+int vr_geti(const char *optname);
+float vr_getf(const char *optname);
 
 int vr_view_translation(int eye, float *vec);
 int vr_view_rotation(int eye, float *quat);
