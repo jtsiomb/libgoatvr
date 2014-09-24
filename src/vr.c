@@ -153,6 +153,29 @@ float vr_getf(const char *optname)
 	return res;
 }
 
+int vr_geti_def(const char *optname, int def_val)
+{
+	int res = 0;
+
+	if(!vrm || !vrm->get_option || vrm->get_option(optname, OTYPE_INT, &res) == -1) {
+		if(get_option_int(defopt, optname, &res) == -1) {	/* fallback */
+			return def_val;
+		}
+	}
+	return res;
+}
+
+float vr_getf_def(const char *optname, float def_val)
+{
+	float res = 0.0f;
+
+	if(!vrm || !vrm->get_option || vrm->get_option(optname, OTYPE_FLOAT, &res) == -1) {
+		if(get_option_float(defopt, optname, &res) == -1) {	/* fallback */
+			return def_val;
+		}
+	}
+	return res;
+}
 
 int vr_view_translation(int eye, float *vec)
 {
