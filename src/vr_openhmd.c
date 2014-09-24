@@ -60,14 +60,14 @@ static int init(void)
 	ipd /= 100.0f; /* convert ipd to meters */
 
 	if((optdb = create_options())) {
-		set_option_int(optdb, VR_OPT_DISPLAY_WIDTH, disp_width);
-		set_option_int(optdb, VR_OPT_DISPLAY_HEIGHT, disp_height);
-		set_option_float(optdb, VR_OPT_IPD, ipd);
+		set_option_int(optdb, VR_DISPLAY_WIDTH, disp_width);
+		set_option_int(optdb, VR_DISPLAY_HEIGHT, disp_height);
+		set_option_float(optdb, VR_IPD, ipd);
 
-		set_option_int(optdb, VR_OPT_LEYE_XRES, (int)(disp_width / 2.0 * FB_EMBIGGEN));
-		set_option_int(optdb, VR_OPT_LEYE_YRES, (int)(disp_height * FB_EMBIGGEN));
-		set_option_int(optdb, VR_OPT_REYE_XRES, (int)(disp_width / 2.0 * FB_EMBIGGEN));
-		set_option_int(optdb, VR_OPT_REYE_YRES, (int)(disp_height * FB_EMBIGGEN));
+		set_option_int(optdb, VR_LEYE_XRES, (int)(disp_width / 2.0 * FB_EMBIGGEN));
+		set_option_int(optdb, VR_LEYE_YRES, (int)(disp_height * FB_EMBIGGEN));
+		set_option_int(optdb, VR_REYE_XRES, (int)(disp_width / 2.0 * FB_EMBIGGEN));
+		set_option_int(optdb, VR_REYE_YRES, (int)(disp_height * FB_EMBIGGEN));
 	}
 
 	ohmd_device_getf(dev, OHMD_DISTORTION_K, distort_k);
