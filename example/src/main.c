@@ -77,8 +77,8 @@ int init(void)
 	}
 
 	/* resize our window to match the HMD resolution */
-	win_width = vr_get_opti(VR_OPT_DISPLAY_WIDTH);
-	win_height = vr_get_opti(VR_OPT_DISPLAY_HEIGHT);
+	win_width = vr_geti(VR_DISPLAY_WIDTH);
+	win_height = vr_geti(VR_DISPLAY_HEIGHT);
 	if(!win_width || !win_height) {
 		SDL_GetWindowSize(win, &win_width, &win_height);
 	} else {
@@ -87,8 +87,8 @@ int init(void)
 	}
 
 	/* and create a single render target texture to encompass both eyes */
-	fb_width = vr_get_opti(VR_OPT_LEYE_XRES) + vr_get_opti(VR_OPT_REYE_XRES);
-	fb_height = vr_get_opti(VR_OPT_LEYE_YRES);	/* assuming both are the same */
+	fb_width = vr_geti(VR_LEYE_XRES) + vr_geti(VR_REYE_XRES);
+	fb_height = vr_geti(VR_LEYE_YRES);	/* assuming both are the same */
 	if(!fb_width || !fb_height) {
 		fb_width = win_width;
 		fb_height = win_height;
@@ -127,7 +127,7 @@ void toggle_hmd_fullscreen(void)
 		 * to the rift's part of the desktop before going fullscreen
 		 */
 		SDL_GetWindowPosition(win, &prev_x, &prev_y);
-		SDL_SetWindowPosition(win, vr_get_opti(VR_OPT_WIN_XOFFS), vr_get_opti(VR_OPT_WIN_YOFFS));
+		SDL_SetWindowPosition(win, vr_geti(VR_WIN_XOFFS), vr_geti(VR_WIN_YOFFS));
 		SDL_SetWindowFullscreen(win, SDL_WINDOW_FULLSCREEN_DESKTOP);
 	} else {
 		/* return to windowed mode and move the window back to its original position */
@@ -178,7 +178,7 @@ void display(void)
 		vr_view_matrix(i, view_mat);
 		glLoadMatrixf(view_mat);
 		/* move the camera to the eye level of the user */
-		glTranslatef(0, -vr_get_optf(VR_OPT_EYE_HEIGHT), 0);
+		glTranslatef(0, -vr_getf(VR_EYE_HEIGHT), 0);
 
 		/* finally draw the scene for this eye */
 		draw_scene();

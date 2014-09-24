@@ -9,10 +9,10 @@ EXPORTS
 	vr_use_module
 	vr_use_module_named
 
-	vr_set_opti
-	vr_set_optf
-	vr_get_opti
-	vr_get_optf
+	vr_seti
+	vr_setf
+	vr_geti
+	vr_getf
 
 	vr_view_translation
 	vr_view_rotation

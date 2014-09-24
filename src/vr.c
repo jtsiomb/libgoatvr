@@ -36,8 +36,8 @@ int vr_init(void)
 
 	/* create the default options database */
 	if(!defopt && (defopt = create_options())) {
-		set_option_float(defopt, VR_OPT_EYE_HEIGHT, 1.675);
-		set_option_float(defopt, VR_OPT_IPD, 0.064);
+		set_option_float(defopt, VR_EYE_HEIGHT, 1.675);
+		set_option_float(defopt, VR_IPD, 0.064);
 	}
 
 	if(vrm) {
@@ -115,7 +115,7 @@ int vr_use_module_named(const char *name)
 	return -1;
 }
 
-void vr_set_opti(const char *optname, int val)
+void vr_seti(const char *optname, int val)
 {
 	if(vrm && vrm->set_option) {
 		vrm->set_option(optname, OTYPE_INT, &val);
@@ -124,7 +124,7 @@ void vr_set_opti(const char *optname, int val)
 	}
 }
 
-void vr_set_optf(const char *optname, float val)
+void vr_setf(const char *optname, float val)
 {
 	if(vrm && vrm->set_option) {
 		vrm->set_option(optname, OTYPE_FLOAT, &val);
@@ -133,7 +133,7 @@ void vr_set_optf(const char *optname, float val)
 	}
 }
 
-int vr_get_opti(const char *optname)
+int vr_geti(const char *optname)
 {
 	int res = 0;
 
@@ -143,7 +143,7 @@ int vr_get_opti(const char *optname)
 	return res;
 }
 
-float vr_get_optf(const char *optname)
+float vr_getf(const char *optname)
 {
 	float res = 0.0f;
 

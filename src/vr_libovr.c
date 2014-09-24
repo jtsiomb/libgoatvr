@@ -82,16 +82,16 @@ static int init(void)
 
 	/* create the options database */
 	if((optdb = create_options())) {
-		set_option_int(optdb, VR_OPT_DISPLAY_WIDTH, hmd->Resolution.w);
-		set_option_int(optdb, VR_OPT_DISPLAY_HEIGHT, hmd->Resolution.h);
-		set_option_int(optdb, VR_OPT_LEYE_XRES, eye_res[0].w);
-		set_option_int(optdb, VR_OPT_LEYE_YRES, eye_res[0].h);
-		set_option_int(optdb, VR_OPT_REYE_XRES, eye_res[1].w);
-		set_option_int(optdb, VR_OPT_REYE_YRES, eye_res[1].h);
-		set_option_float(optdb, VR_OPT_EYE_HEIGHT, ovrHmd_GetFloat(hmd, OVR_KEY_EYE_HEIGHT, OVR_DEFAULT_EYE_HEIGHT));
-		set_option_float(optdb, VR_OPT_IPD, ovrHmd_GetFloat(hmd, OVR_KEY_IPD, OVR_DEFAULT_IPD));
-		set_option_int(optdb, VR_OPT_WIN_XOFFS, hmd->WindowsPos.x);
-		set_option_int(optdb, VR_OPT_WIN_YOFFS, hmd->WindowsPos.y);
+		set_option_int(optdb, VR_DISPLAY_WIDTH, hmd->Resolution.w);
+		set_option_int(optdb, VR_DISPLAY_HEIGHT, hmd->Resolution.h);
+		set_option_int(optdb, VR_LEYE_XRES, eye_res[0].w);
+		set_option_int(optdb, VR_LEYE_YRES, eye_res[0].h);
+		set_option_int(optdb, VR_REYE_XRES, eye_res[1].w);
+		set_option_int(optdb, VR_REYE_YRES, eye_res[1].h);
+		set_option_float(optdb, VR_EYE_HEIGHT, ovrHmd_GetFloat(hmd, OVR_KEY_EYE_HEIGHT, OVR_DEFAULT_EYE_HEIGHT));
+		set_option_float(optdb, VR_IPD, ovrHmd_GetFloat(hmd, OVR_KEY_IPD, OVR_DEFAULT_IPD));
+		set_option_int(optdb, VR_WIN_XOFFS, hmd->WindowsPos.x);
+		set_option_int(optdb, VR_WIN_YOFFS, hmd->WindowsPos.y);
 	}
 
 	deferred_init_done = 0;
