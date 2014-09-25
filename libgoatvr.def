@@ -13,6 +13,8 @@ EXPORTS
 	vr_setf
 	vr_geti
 	vr_getf
+	vr_geti_def
+	vr_getf_def
 
 	vr_view_translation
 	vr_view_rotation
