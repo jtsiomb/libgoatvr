@@ -36,7 +36,7 @@ int vr_init(void)
 
 	/* create the default options database */
 	if(!defopt && (defopt = create_options())) {
-		set_option_float(defopt, VR_EYE_RES_SCALE, 1.0);
+		set_option_float(defopt, VR_RENDER_RES_SCALE, 1.0);
 		set_option_float(defopt, VR_EYE_HEIGHT, 1.675);
 		set_option_float(defopt, VR_IPD, 0.064);
 	}
@@ -134,12 +134,45 @@ void vr_setf(const char *optname, float val)
 	}
 }
 
+static int def_option_int(const char *optname)
+{
+	int res = 0;
+	int left, right;
+
+	if(strcmp(optname, VR_RENDER_XRES) == 0) {
+		if(vrm && vrm->get_option && vrm->get_option(optname, OTYPE_INT, &left) != -1 &&
+				vrm->get_option(optname, OTYPE_INT, &right) != -1) {
+			return left + right;
+		}
+	} else if(strcmp(optname, VR_RENDER_YRES) == 0) {
+		if(vrm && vrm->get_option && vrm->get_option(optname, OTYPE_INT, &left) != -1 &&
+				vrm->get_option(optname, OTYPE_INT, &right) != -1) {
+			return left > right ? left : right;
+		}
+	}
+
+	get_option_int(defopt, optname, &res);
+	return res;
+}
+
+static float def_option_float(const char *optname)
+{
+	int res = 0;
+
+	if(strcmp(optname, VR_RENDER_XRES) == 0 || strcmp(optname, VR_RENDER_YRES) == 0) {
+		return (float)def_option_int(optname);
+	}
+
+	get_option_float(defopt, optname, &res);
+	return res;
+}
+
 int vr_geti(const char *optname)
 {
 	int res = 0;
 
 	if(!vrm || !vrm->get_option || vrm->get_option(optname, OTYPE_INT, &res) == -1) {
-		get_option_int(defopt, optname, &res);	/* fallback */
+		res = def_option_int(optname);
 	}
 	return res;
 }
@@ -149,7 +182,7 @@ float vr_getf(const char *optname)
 	float res = 0.0f;
 
 	if(!vrm || !vrm->get_option || vrm->get_option(optname, OTYPE_FLOAT, &res) == -1) {
-		get_option_float(defopt, optname, &res);	/* fallback */
+		res = def_option_float(optname);
 	}
 	return res;
 }
