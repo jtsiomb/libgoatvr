@@ -35,6 +35,7 @@ static int init(void)
 {
 	int i, num_hmds;
 	int use_fake = 0;
+	ovrTrackingCaps tracking;
 
 	if(!ovr_Initialize()) {
 		return -1;
@@ -72,7 +73,9 @@ static int init(void)
 		return -1;
 	}
 
-	ovrHmd_ConfigureTracking(hmd, 0xffffffff, 0);
+	tracking = ovrTrackingCap_Orientation | ovrTrackingCap_Position |
+		ovrTrackingCap_MagYawCorrection;
+	ovrHmd_ConfigureTracking(hmd, tracking, 0);
 
 	eye_fov[0] = hmd->DefaultEyeFov[0];
 	eye_fov[1] = hmd->DefaultEyeFov[1];
