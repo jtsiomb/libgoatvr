@@ -3,6 +3,7 @@
 #ifdef USE_OPENHMD
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <openhmd/openhmd.h>
 #include "opt.h"
 
@@ -60,14 +61,18 @@ static int init(void)
 	ipd /= 100.0f; /* convert ipd to meters */
 
 	if((optdb = create_options())) {
+		int eye_width, eye_height;
+
 		set_option_int(optdb, VR_DISPLAY_WIDTH, disp_width);
 		set_option_int(optdb, VR_DISPLAY_HEIGHT, disp_height);
 		set_option_float(optdb, VR_IPD, ipd);
 
-		set_option_int(optdb, VR_LEYE_XRES, (int)(disp_width / 2.0 * FB_EMBIGGEN));
-		set_option_int(optdb, VR_LEYE_YRES, (int)(disp_height * FB_EMBIGGEN));
-		set_option_int(optdb, VR_REYE_XRES, (int)(disp_width / 2.0 * FB_EMBIGGEN));
-		set_option_int(optdb, VR_REYE_YRES, (int)(disp_height * FB_EMBIGGEN));
+		eye_width = (int)((float)(disp_width / 2) * FB_EMBIGGEN);
+		eye_height = (int)((float)disp_height * FB_EMBIGGEN);
+		set_option_int(optdb, VR_LEYE_XRES, eye_width);
+		set_option_int(optdb, VR_LEYE_YRES, eye_height);
+		set_option_int(optdb, VR_REYE_XRES, eye_width);
+		set_option_int(optdb, VR_REYE_YRES, eye_height);
 	}
 
 	ohmd_device_getf(dev, OHMD_DISTORTION_K, distort_k);
@@ -91,15 +96,30 @@ static void cleanup(void)
 
 static int set_option(const char *opt, enum opt_type type, void *valp)
 {
+	float fval;
+
 	switch(type) {
 	case OTYPE_INT:
+		fval = (float)*(int*)valp;
 		set_option_int(optdb, opt, *(int*)valp);
 		break;
 
 	case OTYPE_FLOAT:
-		set_option_float(optdb, opt, *(float*)valp);
+		fval = *(float*)valp;
+		set_option_float(optdb, opt, fval);
 		break;
 	}
+
+	if(strcmp(opt, VR_EYE_RES_SCALE) == 0) {
+		int eye_width, eye_height;
+		eye_width = (int)((float)(disp_width / 2) * FB_EMBIGGEN * fval);
+		eye_height = (int)((float)disp_height * FB_EMBIGGEN * fval);
+		set_option_int(optdb, VR_LEYE_XRES, eye_width);
+		set_option_int(optdb, VR_LEYE_YRES, eye_height);
+		set_option_int(optdb, VR_REYE_XRES, eye_width);
+		set_option_int(optdb, VR_REYE_YRES, eye_height);
+	}
+
 	return 0;
 }
 

@@ -91,6 +91,7 @@ static int init(void)
 		set_option_int(optdb, VR_LEYE_YRES, eye_res[0].h);
 		set_option_int(optdb, VR_REYE_XRES, eye_res[1].w);
 		set_option_int(optdb, VR_REYE_YRES, eye_res[1].h);
+		set_option_float(optdb, VR_EYE_RES_SCALE, 1.0);
 		set_option_float(optdb, VR_EYE_HEIGHT, ovrHmd_GetFloat(hmd, OVR_KEY_EYE_HEIGHT, OVR_DEFAULT_EYE_HEIGHT));
 		set_option_float(optdb, VR_IPD, ovrHmd_GetFloat(hmd, OVR_KEY_IPD, OVR_DEFAULT_IPD));
 		set_option_int(optdb, VR_WIN_XOFFS, hmd->WindowsPos.x);
@@ -152,15 +153,30 @@ static void cleanup(void)
 
 static int set_option(const char *opt, enum opt_type type, void *valp)
 {
+	float fval;
+
 	switch(type) {
 	case OTYPE_INT:
+		fval = (float)*(int*)valp;
 		set_option_int(optdb, opt, *(int*)valp);
 		break;
 
 	case OTYPE_FLOAT:
-		set_option_float(optdb, opt, *(float*)valp);
+		fval = *(float*)valp;
+		set_option_float(optdb, opt, fval);
 		break;
 	}
+
+	if(hmd && strcmp(opt, VR_EYE_RES_SCALE) == 0) {
+		eye_res[0] = ovrHmd_GetFovTextureSize(hmd, ovrEye_Left, eye_fov[0], fval);
+		eye_res[1] = ovrHmd_GetFovTextureSize(hmd, ovrEye_Right, eye_fov[1], fval);
+
+		set_option_int(optdb, VR_LEYE_XRES, eye_res[0].w);
+		set_option_int(optdb, VR_LEYE_YRES, eye_res[0].h);
+		set_option_int(optdb, VR_REYE_XRES, eye_res[1].w);
+		set_option_int(optdb, VR_REYE_YRES, eye_res[1].h);
+	}
+
 	return 0;
 }
 

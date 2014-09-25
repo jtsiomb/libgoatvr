@@ -10,6 +10,7 @@
 #define VR_REYE_YRES		"right-eye-yres"
 #define VR_WIN_XOFFS		"win-xoffset"
 #define VR_WIN_YOFFS		"win-yoffset"
+#define VR_EYE_RES_SCALE	"eye-res-scale"		/* default 1 */
 /* unit: meters */
 #define VR_EYE_HEIGHT		"eye-height"
 #define VR_IPD				"ipd"

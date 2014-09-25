@@ -36,6 +36,7 @@ int vr_init(void)
 
 	/* create the default options database */
 	if(!defopt && (defopt = create_options())) {
+		set_option_float(defopt, VR_EYE_RES_SCALE, 1.0);
 		set_option_float(defopt, VR_EYE_HEIGHT, 1.675);
 		set_option_float(defopt, VR_IPD, 0.064);
 	}
