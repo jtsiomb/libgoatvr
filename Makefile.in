@@ -70,9 +70,7 @@ install: $(lib_so) $(lib_a)
 	cp $(lib_a) $(DESTDIR)$(PREFIX)/lib/$(lib_a)
 	cp $(lib_so) $(DESTDIR)$(PREFIX)/lib/$(lib_so)
 	[ -n "$(soname)" ] && \
-		cd $(DESTDIR)$(PREFIX)/lib && \
-		ln -s $(lib_so) $(soname) && \
-		ln -s $(soname) $(ldname) || \
+		cp -d $(soname) $(ldname) $(DESTDIR)$(PREFIX)/lib || \
 		true
 
 .PHONY: uninstall
