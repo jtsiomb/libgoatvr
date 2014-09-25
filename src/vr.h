@@ -16,6 +16,8 @@
 /* unit: meters */
 #define VR_EYE_HEIGHT		"eye-height"
 #define VR_IPD				"ipd"
+/* misc options */
+#define VR_NULL_STEREO		"null-show-stereo"	/* bool, default 0 */
 
 enum {
 	VR_EYE_LEFT,
