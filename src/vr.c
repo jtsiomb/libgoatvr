@@ -39,6 +39,7 @@ int vr_init(void)
 		set_option_float(defopt, VR_RENDER_RES_SCALE, 1.0);
 		set_option_float(defopt, VR_EYE_HEIGHT, 1.675);
 		set_option_float(defopt, VR_IPD, 0.064);
+		set_option_int(defopt, VR_NULL_STEREO, 0);
 	}
 
 	if(vrm) {
@@ -330,7 +331,7 @@ void vr_recenter(void)
 
 static void fallback_present(void)
 {
-	int i;
+	int i, show_both = vr_geti(VR_NULL_STEREO);
 
 	glPushAttrib(GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 
@@ -350,8 +351,15 @@ static void fallback_present(void)
 	glLoadIdentity();
 
 	for(i=0; i<2; i++) {
-		float x0 = i == 0 ? -1 : 0;
-		float x1 = i == 0 ? 0 : 1;
+		float x0, x1;
+
+		if(show_both) {
+			x0 = i == 0 ? -1 : 0;
+			x1 = i == 0 ? 0 : 1;
+		} else {
+			x0 = -1;
+			x1 = 1;
+		}
 
 		glBindTexture(GL_TEXTURE_2D, rtarg[i].tex);
 
@@ -365,6 +373,8 @@ static void fallback_present(void)
 		glTexCoord2f(rtarg[i].umin, rtarg[i].vmax);
 		glVertex2f(x0, 1);
 		glEnd();
+
+		if(!show_both) break;
 	}
 
 	glPopMatrix();
