@@ -110,7 +110,7 @@ static int set_option(const char *opt, enum opt_type type, void *valp)
 		break;
 	}
 
-	if(strcmp(opt, VR_EYE_RES_SCALE) == 0) {
+	if(strcmp(opt, VR_RENDER_RES_SCALE) == 0) {
 		int eye_width, eye_height;
 		eye_width = (int)((float)(disp_width / 2) * FB_EMBIGGEN * fval);
 		eye_height = (int)((float)disp_height * FB_EMBIGGEN * fval);

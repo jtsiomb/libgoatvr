@@ -8,9 +8,11 @@
 #define VR_LEYE_YRES		"left-eye-yres"
 #define VR_REYE_XRES		"right-eye-xres"
 #define VR_REYE_YRES		"right-eye-yres"
+#define VR_RENDER_XRES		"render-xres"	/* VR_LEYE_XRES + VR_REYE_XRES */
+#define VR_RENDER_YRES		"render-yres"	/* max(VR_LEYE_YRES, VR_REYE_YRES) */
 #define VR_WIN_XOFFS		"win-xoffset"
 #define VR_WIN_YOFFS		"win-yoffset"
-#define VR_EYE_RES_SCALE	"eye-res-scale"		/* default 1 */
+#define VR_RENDER_RES_SCALE	"render-res-scale"		/* default 1 */
 /* unit: meters */
 #define VR_EYE_HEIGHT		"eye-height"
 #define VR_IPD				"ipd"
