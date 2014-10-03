@@ -158,7 +158,7 @@ static int def_option_int(const char *optname)
 
 static float def_option_float(const char *optname)
 {
-	int res = 0;
+	float res = 0.0f;
 
 	if(strcmp(optname, VR_RENDER_XRES) == 0 || strcmp(optname, VR_RENDER_YRES) == 0) {
 		return (float)def_option_int(optname);
@@ -214,12 +214,17 @@ float vr_getf_def(const char *optname, float def_val)
 
 int vr_view_translation(int eye, float *vec)
 {
+	float eye_offset;
+
 	if(vrm && vrm->translation) {
 		vrm->translation(eye, vec);
 		return 1;
 	}
-	vec[0] = vec[1] = vec[2] = 0.0f;
-	return 0;
+
+	eye_offset = vr_getf(VR_IPD) / 2.0;
+	vec[0] = eye == VR_EYE_LEFT ? -eye_offset : eye_offset;
+	vec[1] = vec[2] = 0.0f;
+	return 1;
 }
 
 int vr_view_rotation(int eye, float *quat)
@@ -235,7 +240,6 @@ int vr_view_rotation(int eye, float *quat)
 
 int vr_view_matrix(int eye, float *mat)
 {
-	int have_trans, have_rot;
 	float offs[3], quat[4];
 	float rmat[16], tmat[16];
 
@@ -244,12 +248,14 @@ int vr_view_matrix(int eye, float *mat)
 		return 1;
 	}
 
-	have_trans = vr_view_translation(eye, offs);
-	have_rot = vr_view_rotation(eye, quat);
-
-	if(!have_trans && !have_rot) {
-		memcpy(mat, idmat, sizeof idmat);
-		return 0;
+	if(!vr_view_translation(eye, offs)) {
+		float eye_offset = vr_getf(VR_IPD) / 2.0;
+		offs[0] = eye == VR_EYE_LEFT ? -eye_offset : eye_offset;
+		offs[1] = offs[2];
+	}
+	if(!vr_view_rotation(eye, quat)) {
+		quat[0] = quat[1] = quat[2] = 0.0f;
+		quat[3] = 1.0f;
 	}
 
 	offs[0] = -offs[0];
