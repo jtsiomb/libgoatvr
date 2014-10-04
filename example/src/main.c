@@ -155,7 +155,7 @@ void display(void)
 		 * rendering the left eye's view (0, 0, width/2, height), and in the right half
 		 * of the framebuffer for the right eye's view (width/2, 0, width/2, height)
 		 */
-		glViewport(i == 0 ? 0 : fb_width / 2, 0, fb_width / 2, fb_height);
+		glViewport(i == VR_EYE_LEFT ? 0 : fb_width / 2, 0, fb_width / 2, fb_height);
 
 		glMatrixMode(GL_PROJECTION);
 		/* -- projection transformation --
@@ -249,11 +249,19 @@ void draw_scene(void)
 		draw_box(0.5, 0.5, 0.5, 1.0);
 		glPopMatrix();
 	}
+
+	col[0] = 1;
+	col[1] = 1;
+	col[2] = 0.4;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
+	draw_box(0.05, 1.2, 6, 1.0);
+	draw_box(6, 1.2, 0.05, 1.0);
 }
 
 void draw_box(float xsz, float ysz, float zsz, float norm_sign)
 {
 	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
 	glScalef(xsz * 0.5, ysz * 0.5, zsz * 0.5);
 
 	if(norm_sign < 0.0) {
@@ -302,6 +310,7 @@ void draw_box(float xsz, float ysz, float zsz, float norm_sign)
 	glEnd();
 
 	glFrontFace(GL_CCW);
+	glPopMatrix();
 }
 
 /* update_rtarg creates (and/or resizes) the render target used to draw the two stero views */

@@ -17,6 +17,7 @@
 #include <OVR_CAPI.h>
 #include <OVR_CAPI_GL.h>
 
+/* undef this if you want the retarded health and safety warning screen */
 #define DISABLE_RETARDED_HEALTH_WARNING
 
 /* just dropping the prototype here to avoid including CAPI_HSWDisplay.h */
@@ -28,8 +29,13 @@ static ovrEyeRenderDesc eye_render_desc[2];
 static ovrSizei eye_res[2];
 static ovrGLTexture eye_tex[2];
 static ovrFovPort eye_fov[2];
-static ovrPosef pose[2];
+static ovrPosef pose[2] = {
+		{ {0, 0, 0, 1}, {0, 0, 0} },
+		{ {0, 0, 0, 1}, {0, 0, 0} }
+};
 static int deferred_init_done;
+
+static int inside_begin_end;
 
 static int init(void)
 {
@@ -107,6 +113,7 @@ static void deferred_init(void)
 	union ovrGLConfig glcfg;
 	unsigned int dcaps;
 	void *win = 0;
+	float leye_offs[3], reye_offs[3];
 
 	deferred_init_done = 1;
 
@@ -136,6 +143,16 @@ static void deferred_init(void)
 	if(!ovrHmd_ConfigureRendering(hmd, &glcfg.Config, dcaps, eye_fov, eye_render_desc)) {
 		fprintf(stderr, "failed to configure LibOVR distortion renderer\n");
 	}
+
+	/* set the eye offset options */
+	leye_offs[0] = eye_render_desc[ovrEye_Left].ViewAdjust.x;
+	leye_offs[1] = eye_render_desc[ovrEye_Left].ViewAdjust.y;
+	leye_offs[2] = eye_render_desc[ovrEye_Left].ViewAdjust.z;
+	set_option_vec(optdb, VR_LEYE_OFFSET, leye_offs);
+	reye_offs[0] = eye_render_desc[ovrEye_Right].ViewAdjust.x;
+	reye_offs[1] = eye_render_desc[ovrEye_Right].ViewAdjust.y;
+	reye_offs[2] = eye_render_desc[ovrEye_Right].ViewAdjust.z;
+	set_option_vec(optdb, VR_REYE_OFFSET, reye_offs);
 
 #ifdef DISABLE_RETARDED_HEALTH_WARNING
 	ovrhmd_EnableHSWDisplaySDKRender(hmd, 0);
@@ -198,10 +215,16 @@ static void translation(int eye, float *vec)
 		return;
 	}
 
-	pose[eye] = ovrHmd_GetEyePose(hmd, eye == VR_EYE_LEFT ? ovrEye_Left : ovrEye_Right);
-	vec[0] = pose[eye].Position.x + eye_render_desc[eye].ViewAdjust.x;
-	vec[1] = pose[eye].Position.y + eye_render_desc[eye].ViewAdjust.y;
-	vec[2] = pose[eye].Position.z + eye_render_desc[eye].ViewAdjust.z;
+	/* if we're inside the begin-end block we can get a fresh pose, otherwise we'll just
+	 * reuse the one we got last frame.
+	 */
+	if(inside_begin_end) {
+		pose[eye] = ovrHmd_GetEyePose(hmd, eye == VR_EYE_LEFT ? ovrEye_Left : ovrEye_Right);
+	}
+
+	vec[0] = pose[eye].Position.x;
+	vec[1] = pose[eye].Position.y;
+	vec[2] = pose[eye].Position.z;
 }
 
 static void rotation(int eye, float *quat)
@@ -212,7 +235,11 @@ static void rotation(int eye, float *quat)
 		return;
 	}
 
-	pose[eye] = ovrHmd_GetEyePose(hmd, eye == VR_EYE_LEFT ? ovrEye_Left : ovrEye_Right);
+	/* same as above (translation) */
+	if(inside_begin_end) {
+		pose[eye] = ovrHmd_GetEyePose(hmd, eye == VR_EYE_LEFT ? ovrEye_Left : ovrEye_Right);
+	}
+
 	quat[0] = pose[eye].Orientation.x;
 	quat[1] = pose[eye].Orientation.y;
 	quat[2] = pose[eye].Orientation.z;
@@ -240,8 +267,6 @@ static void proj_matrix(int eye, float znear, float zfar, float *mat)
 	}
 }
 
-static int new_frame = 1;
-
 static void begin(int eye)
 {
 	if(!hmd) return;
@@ -250,9 +275,9 @@ static void begin(int eye)
 		deferred_init();
 	}
 
-	if(new_frame) {
+	if(!inside_begin_end) {
 		ovrHmd_BeginFrame(hmd, 0);
-		new_frame = 0;
+		inside_begin_end = 1;
 	}
 }
 
@@ -261,7 +286,7 @@ static int present(void)
 	if(!hmd) return 0;
 
 	ovrHmd_EndFrame(hmd, pose, &eye_tex[0].Texture);
-	new_frame = 1;
+	inside_begin_end = 0;
 
 	return 1;
 }
