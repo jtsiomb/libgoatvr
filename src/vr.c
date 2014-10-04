@@ -6,6 +6,7 @@
 #include "vr_impl.h"
 #include "mathutil.h"
 
+#define DEF_IPD		0.064f
 
 static void fallback_present(void);
 
@@ -36,9 +37,11 @@ int vr_init(void)
 
 	/* create the default options database */
 	if(!defopt && (defopt = create_options())) {
-		set_option_float(defopt, VR_RENDER_RES_SCALE, 1.0);
-		set_option_float(defopt, VR_EYE_HEIGHT, 1.675);
-		set_option_float(defopt, VR_IPD, 0.064);
+		set_option_float(defopt, VR_RENDER_RES_SCALE, 1.0f);
+		set_option_float(defopt, VR_EYE_HEIGHT, 1.675f);
+		set_option_float(defopt, VR_IPD, DEF_IPD);
+		set_option_vec3f(defopt, VR_LEYE_OFFSET, -DEF_IPD * 0.5f, 0.0f, 0.0f);
+		set_option_vec3f(defopt, VR_REYE_OFFSET, DEF_IPD * 0.5f, 0.0f, 0.0f);
 		set_option_int(defopt, VR_NULL_STEREO, 0);
 	}
 
@@ -168,6 +171,14 @@ static float def_option_float(const char *optname)
 	return res;
 }
 
+static float *def_option_vec(const char *optname, float *res)
+{
+	res[0] = res[1] = res[2] = res[3] = 0.0f;
+
+	get_option_vec(defopt, optname, res);
+	return res;
+}
+
 int vr_geti(const char *optname)
 {
 	int res = 0;
@@ -184,6 +195,17 @@ float vr_getf(const char *optname)
 
 	if(!vrm || !vrm->get_option || vrm->get_option(optname, OTYPE_FLOAT, &res) == -1) {
 		res = def_option_float(optname);
+	}
+	return res;
+}
+
+float *vr_getfv(const char *optname, float *res)
+{
+	static float sres[4];
+	if(!res) res = sres;
+
+	if(!vrm || !vrm->get_option || vrm->get_option(optname, OTYPE_VEC, res) == -1) {
+		def_option_vec(optname, res);
 	}
 	return res;
 }
@@ -214,17 +236,12 @@ float vr_getf_def(const char *optname, float def_val)
 
 int vr_view_translation(int eye, float *vec)
 {
-	float eye_offset;
-
 	if(vrm && vrm->translation) {
 		vrm->translation(eye, vec);
 		return 1;
 	}
-
-	eye_offset = vr_getf(VR_IPD) / 2.0;
-	vec[0] = eye == VR_EYE_LEFT ? -eye_offset : eye_offset;
-	vec[1] = vec[2] = 0.0f;
-	return 1;
+	vec[0] = vec[1] = vec[2] = 0.0f;
+	return 0;
 }
 
 int vr_view_rotation(int eye, float *quat)
@@ -240,31 +257,36 @@ int vr_view_rotation(int eye, float *quat)
 
 int vr_view_matrix(int eye, float *mat)
 {
-	float offs[3], quat[4];
-	float rmat[16], tmat[16];
+	float offs[3], quat[4], eye_offs[4];
+	float rmat[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+	float tmat[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
 	if(vrm && vrm->view_matrix) {
 		vrm->view_matrix(eye, mat);
 		return 1;
 	}
 
-	if(!vr_view_translation(eye, offs)) {
-		float eye_offset = vr_getf(VR_IPD) / 2.0;
-		offs[0] = eye == VR_EYE_LEFT ? -eye_offset : eye_offset;
-		offs[1] = offs[2];
+	memcpy(mat, idmat, sizeof idmat);
+
+	if(vr_view_translation(eye, offs)) {
+		offs[0] = -offs[0];
+		offs[1] = -offs[1];
+		offs[2] = -offs[2];
+
+		vrimp_translation_matrix(offs, tmat);
+		vrimp_mult_matrix(mat, mat, tmat);
 	}
-	if(!vr_view_rotation(eye, quat)) {
-		quat[0] = quat[1] = quat[2] = 0.0f;
-		quat[3] = 1.0f;
+	if(vr_view_rotation(eye, quat)) {
+		vrimp_rotation_matrix(quat, rmat);
+		vrimp_mult_matrix(mat, mat, rmat);
 	}
 
-	offs[0] = -offs[0];
-	offs[1] = -offs[1];
-	offs[2] = -offs[2];
-
-	vrimp_translation_matrix(offs, tmat);
-	vrimp_rotation_matrix(quat, rmat);
-	vrimp_mult_matrix(mat, tmat, rmat);
+	vr_getfv(eye == VR_EYE_LEFT ? VR_LEYE_OFFSET : VR_REYE_OFFSET, eye_offs);
+	eye_offs[0] = -eye_offs[0];
+	eye_offs[1] = -eye_offs[1];
+	eye_offs[2] = -eye_offs[2];
+	vrimp_translation_matrix(eye_offs, tmat);
+	vrimp_mult_matrix(mat, mat, tmat);
 	return 1;
 }
 

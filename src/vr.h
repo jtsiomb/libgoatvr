@@ -16,6 +16,8 @@
 /* unit: meters */
 #define VR_EYE_HEIGHT		"eye-height"
 #define VR_IPD				"ipd"
+#define VR_LEYE_OFFSET		"left-eye-offset"	/* stereo offset from center of the head */
+#define VR_REYE_OFFSET		"right-eye-offset"	/* stereo offset from center of the head */
 /* misc options */
 #define VR_NULL_STEREO		"null-stereo"	/* bool, default 0 */
 
@@ -41,6 +43,7 @@ void vr_seti(const char *optname, int val);
 void vr_setf(const char *optname, float val);
 int vr_geti(const char *optname);
 float vr_getf(const char *optname);
+float *vr_getfv(const char *optname, float *res);
 /* variants of the get functions, with an additional "default value"
  * argument, which is returned if the requested option is missing
  */
