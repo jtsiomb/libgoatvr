@@ -21,6 +21,13 @@ static void (*glGenBuffers)(GLsizei, GLuint*);
 static void (*glDeleteBuffers)(GLsizei, GLuint*);
 static void (*glBufferData)(GLenum, unsigned int, const GLvoid*, GLenum);
 static void (*glBindBuffer)(GLenum, GLuint);
+#else
+#ifndef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glGenBuffers(GLsizei, GLuint*);
+GLAPI void APIENTRY glDeleteBuffers(GLsizei, GLuint*);
+GLAPI void APIENTRY glBufferData(GLenum, unsigned int, const GLvoid*, GLenum);
+GLAPI void APIENTRY glBindBuffer(GLenum, GLuint);
+#endif
 #endif
 
 int vrimp_mesh_init(struct mesh *m)
