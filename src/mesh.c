@@ -23,9 +23,17 @@ static void (*glBufferData)(GLenum, unsigned int, const GLvoid*, GLenum);
 static void (*glBindBuffer)(GLenum, GLuint);
 #else
 #ifndef GL_GLEXT_PROTOTYPES
+
+#ifndef GLAPI
+#define GLAPI
+#endif
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+
 GLAPI void APIENTRY glGenBuffers(GLsizei, GLuint*);
-GLAPI void APIENTRY glDeleteBuffers(GLsizei, GLuint*);
-GLAPI void APIENTRY glBufferData(GLenum, unsigned int, const GLvoid*, GLenum);
+GLAPI void APIENTRY glDeleteBuffers(GLsizei, const GLuint*);
+GLAPI void APIENTRY glBufferData();
 GLAPI void APIENTRY glBindBuffer(GLenum, GLuint);
 #endif
 #endif
