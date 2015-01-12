@@ -119,7 +119,7 @@ static void deferred_init(void)
 
 	memset(&glcfg, 0, sizeof glcfg);
 	glcfg.OGL.Header.API = ovrRenderAPI_OpenGL;
-	glcfg.OGL.Header.RTSize = hmd->Resolution;
+	glcfg.OGL.Header.BackBufferSize = hmd->Resolution;
 	glcfg.OGL.Header.Multisample = 1;
 #ifdef WIN32
 	win = GetActiveWindow();
@@ -137,7 +137,7 @@ static void deferred_init(void)
 	}
 	ovrHmd_SetEnabledCaps(hmd, ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction);
 
-	dcaps = ovrDistortionCap_Chromatic | ovrDistortionCap_Vignette | ovrDistortionCap_TimeWarp |
+	dcaps = ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp |
 		ovrDistortionCap_Overdrive | ovrDistortionCap_NoRestore;
 
 	if(!ovrHmd_ConfigureRendering(hmd, &glcfg.Config, dcaps, eye_fov, eye_render_desc)) {
@@ -145,13 +145,13 @@ static void deferred_init(void)
 	}
 
 	/* set the eye offset options */
-	leye_offs[0] = eye_render_desc[ovrEye_Left].ViewAdjust.x;
-	leye_offs[1] = eye_render_desc[ovrEye_Left].ViewAdjust.y;
-	leye_offs[2] = eye_render_desc[ovrEye_Left].ViewAdjust.z;
+	leye_offs[0] = eye_render_desc[ovrEye_Left].HmdToEyeViewOffset.x;
+	leye_offs[1] = eye_render_desc[ovrEye_Left].HmdToEyeViewOffset.y;
+	leye_offs[2] = eye_render_desc[ovrEye_Left].HmdToEyeViewOffset.z;
 	set_option_vec(optdb, VR_LEYE_OFFSET, leye_offs);
-	reye_offs[0] = eye_render_desc[ovrEye_Right].ViewAdjust.x;
-	reye_offs[1] = eye_render_desc[ovrEye_Right].ViewAdjust.y;
-	reye_offs[2] = eye_render_desc[ovrEye_Right].ViewAdjust.z;
+	reye_offs[0] = eye_render_desc[ovrEye_Right].HmdToEyeViewOffset.x;
+	reye_offs[1] = eye_render_desc[ovrEye_Right].HmdToEyeViewOffset.y;
+	reye_offs[2] = eye_render_desc[ovrEye_Right].HmdToEyeViewOffset.z;
 	set_option_vec(optdb, VR_REYE_OFFSET, reye_offs);
 
 #ifdef DISABLE_RETARDED_HEALTH_WARNING
@@ -219,7 +219,7 @@ static void translation(int eye, float *vec)
 	 * reuse the one we got last frame.
 	 */
 	if(inside_begin_end) {
-		pose[eye] = ovrHmd_GetEyePose(hmd, eye == VR_EYE_LEFT ? ovrEye_Left : ovrEye_Right);
+		pose[eye] = ovrHmd_GetHmdPosePerEye(hmd, eye == VR_EYE_LEFT ? ovrEye_Left : ovrEye_Right);
 	}
 
 	vec[0] = pose[eye].Position.x;
@@ -237,7 +237,7 @@ static void rotation(int eye, float *quat)
 
 	/* same as above (translation) */
 	if(inside_begin_end) {
-		pose[eye] = ovrHmd_GetEyePose(hmd, eye == VR_EYE_LEFT ? ovrEye_Left : ovrEye_Right);
+		pose[eye] = ovrHmd_GetHmdPosePerEye(hmd, eye == VR_EYE_LEFT ? ovrEye_Left : ovrEye_Right);
 	}
 
 	quat[0] = pose[eye].Orientation.x;
@@ -301,7 +301,7 @@ static void set_eye_texture(int eye, unsigned int tex, float umin, float vmin, f
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &texsz.h);
 
 	rect.Pos.x = (int)(umin * texsz.w);
-	rect.Pos.y = (int)((vmin + 1.0 - vmax) * texsz.h);
+	rect.Pos.y = (int)(vmin * texsz.h);
 	rect.Size.w = (int)((umax - umin) * texsz.w);
 	rect.Size.h = (int)((vmax - vmin) * texsz.h);
 
