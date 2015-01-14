@@ -33,7 +33,7 @@ static struct {
 int vr_init(void)
 {
 	int i, nmodules;
-	char *vrmod_env;
+	char *env;
 
 	/* create the default options database */
 	if(!defopt && (defopt = create_options())) {
@@ -42,7 +42,12 @@ int vr_init(void)
 		set_option_float(defopt, VR_IPD, DEF_IPD);
 		set_option_vec3f(defopt, VR_LEYE_OFFSET, -DEF_IPD * 0.5f, 0.0f, 0.0f);
 		set_option_vec3f(defopt, VR_REYE_OFFSET, DEF_IPD * 0.5f, 0.0f, 0.0f);
-		set_option_int(defopt, VR_NULL_STEREO, 0);
+
+		if((env = getenv("VR_NULL_STEREO")) && atoi(env)) {
+			set_option_int(defopt, VR_NULL_STEREO, 1);
+		} else {
+			set_option_int(defopt, VR_NULL_STEREO, 0);
+		}
 	}
 
 	if(vrm) {
@@ -64,8 +69,8 @@ int vr_init(void)
 		return -1;
 	}
 
-	if((vrmod_env = getenv("VR_MODULE"))) {
-		vr_use_module_named(vrmod_env);
+	if((env = getenv("VR_MODULE"))) {
+		vr_use_module_named(env);
 	} else {
 		vr_use_module(0);
 	}
