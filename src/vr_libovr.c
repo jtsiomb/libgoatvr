@@ -1,8 +1,9 @@
 #ifdef WIN32
 #define OVR_OS_WIN32
-#endif
-#ifdef __APPLE__
+#elif defined(__APPLE__)
 #define OVR_OS_MAC
+#else
+#define OVR_OS_LINUX
 #endif
 
 #include "vr_impl.h"
@@ -16,6 +17,10 @@
 
 #include <OVR_CAPI.h>
 #include <OVR_CAPI_GL.h>
+
+#ifdef OVR_OS_LINUX
+#include <GL/glx.h>
+#endif
 
 /* undef this if you want the retarded health and safety warning screen */
 #define DISABLE_RETARDED_HEALTH_WARNING
@@ -123,10 +128,17 @@ static void deferred_init(void)
 	glcfg.OGL.Header.Multisample = 1;
 #ifdef WIN32
 	win = GetActiveWindow();
-	/*glcfg.OGL.Window = win;
+	glcfg.OGL.Window = win;
 	glcfg.OGL.DC = wglGetCurrentDC();
-	assert(glcfg.OGL.Window);
-	assert(glcfg.OGL.DC);*/
+#else
+	glcfg.OGL.Disp = glXGetCurrentDisplay();
+	win = (void*)glXGetCurrentDrawable();
+
+	/* on linux the Oculus SDK docs are instructing users to leave the DK2 screen in
+	 * portrait mode. So we'll have to flip width and height
+	 */
+	glcfg.OGL.Header.BackBufferSize.w = hmd->Resolution.h;
+	glcfg.OGL.Header.BackBufferSize.h = hmd->Resolution.w;
 #endif
 
 	if(!(hmd->HmdCaps & ovrHmdCap_ExtendDesktop)) {
@@ -139,6 +151,9 @@ static void deferred_init(void)
 
 	dcaps = ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp |
 		ovrDistortionCap_Overdrive | ovrDistortionCap_NoRestore;
+#ifdef OVR_OS_LINUX
+	dcaps |= ovrDistortionCap_LinuxDevFullscreen;
+#endif
 
 	if(!ovrHmd_ConfigureRendering(hmd, &glcfg.Config, dcaps, eye_fov, eye_render_desc)) {
 		fprintf(stderr, "failed to configure LibOVR distortion renderer\n");
@@ -148,11 +163,20 @@ static void deferred_init(void)
 	leye_offs[0] = eye_render_desc[ovrEye_Left].HmdToEyeViewOffset.x;
 	leye_offs[1] = eye_render_desc[ovrEye_Left].HmdToEyeViewOffset.y;
 	leye_offs[2] = eye_render_desc[ovrEye_Left].HmdToEyeViewOffset.z;
-	set_option_vec(optdb, VR_LEYE_OFFSET, leye_offs);
 	reye_offs[0] = eye_render_desc[ovrEye_Right].HmdToEyeViewOffset.x;
 	reye_offs[1] = eye_render_desc[ovrEye_Right].HmdToEyeViewOffset.y;
 	reye_offs[2] = eye_render_desc[ovrEye_Right].HmdToEyeViewOffset.z;
-	set_option_vec(optdb, VR_REYE_OFFSET, reye_offs);
+
+	/* sanity check ... on linux it seems I'm getting the eye offsets reversed for some reason */
+	if(leye_offs[0] > reye_offs[0]) {
+		fprintf(stderr, "BUG %s:%d: eye offset reversed?! fixing but wtf...\n", __FILE__, __LINE__);
+		set_option_vec(optdb, VR_LEYE_OFFSET, reye_offs);
+		set_option_vec(optdb, VR_REYE_OFFSET, leye_offs);
+	} else {
+		set_option_vec(optdb, VR_LEYE_OFFSET, leye_offs);
+		set_option_vec(optdb, VR_REYE_OFFSET, reye_offs);
+	}
+
 
 #ifdef DISABLE_RETARDED_HEALTH_WARNING
 	ovrhmd_EnableHSWDisplaySDKRender(hmd, 0);
@@ -182,6 +206,10 @@ static int set_option(const char *opt, enum opt_type type, void *valp)
 		fval = *(float*)valp;
 		set_option_float(optdb, opt, fval);
 		break;
+
+	case OTYPE_VEC:
+		set_option_vec(optdb, opt, valp);
+		break;
 	}
 
 	if(hmd && strcmp(opt, VR_RENDER_RES_SCALE) == 0) {
@@ -204,6 +232,8 @@ static int get_option(const char *opt, enum opt_type type, void *valp)
 		return get_option_int(optdb, opt, valp);
 	case OTYPE_FLOAT:
 		return get_option_float(optdb, opt, valp);
+	case OTYPE_VEC:
+		return get_option_vec(optdb, opt, valp);
 	}
 	return -1;
 }
@@ -283,10 +313,18 @@ static void begin(int eye)
 
 static int present(void)
 {
+	int cur_prog;
+
 	if(!hmd) return 0;
+
+	glGetIntegerv(GL_CURRENT_PROGRAM, &cur_prog);
 
 	ovrHmd_EndFrame(hmd, pose, &eye_tex[0].Texture);
 	inside_begin_end = 0;
+
+	if(cur_prog) {
+		glUseProgram(0);
+	}
 
 	return 1;
 }
