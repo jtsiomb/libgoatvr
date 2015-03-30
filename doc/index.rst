@@ -15,8 +15,10 @@ This documentation describes how to use libgoatvr in your programs, and is
 split into the following sections:
 
  1. Initialization_
- 2. Head tracking
- 3. Rendering
+ 2. `Head tracking`_
+ 3. Rendering_
  4. options and properties
 
 .. _Initialization: 1-init.html
+.. _`Head tracking`: 2-tracking.html
+.. _Rendering: 3-rendering.html
