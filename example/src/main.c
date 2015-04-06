@@ -129,10 +129,12 @@ void toggle_hmd_fullscreen(void)
 		SDL_GetWindowPosition(win, &prev_x, &prev_y);
 		SDL_SetWindowPosition(win, vr_geti(VR_WIN_XOFFS), vr_geti(VR_WIN_YOFFS));
 		SDL_SetWindowFullscreen(win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		SDL_SetRelativeMouseMode(1);
 	} else {
 		/* return to windowed mode and move the window back to its original position */
 		SDL_SetWindowFullscreen(win, 0);
 		SDL_SetWindowPosition(win, prev_x, prev_y);
+		SDL_SetRelativeMouseMode(0);
 	}
 }
 

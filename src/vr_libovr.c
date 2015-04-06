@@ -23,7 +23,7 @@
 #endif
 
 /* undef this if you want the retarded health and safety warning screen */
-#define DISABLE_RETARDED_HEALTH_WARNING
+#undef DISABLE_RETARDED_HEALTH_WARNING
 
 /* just dropping the prototype here to avoid including CAPI_HSWDisplay.h */
 OVR_EXPORT void ovrhmd_EnableHSWDisplaySDKRender(ovrHmd hmd, ovrBool enabled);
@@ -48,7 +48,7 @@ static int init(void)
 	int use_fake = 0;
 	ovrTrackingCaps tracking;
 
-	if(!ovr_Initialize()) {
+	if(!ovr_Initialize(0)) {
 		return -1;
 	}
 	printf("initialized LibOVR %s\n", ovr_GetVersionString());
@@ -149,8 +149,7 @@ static void deferred_init(void)
 	}
 	ovrHmd_SetEnabledCaps(hmd, ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction);
 
-	dcaps = ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp |
-		ovrDistortionCap_Overdrive | ovrDistortionCap_NoRestore;
+	dcaps = ovrDistortionCap_TimeWarp |	ovrDistortionCap_Overdrive;
 #ifdef OVR_OS_LINUX
 	dcaps |= ovrDistortionCap_LinuxDevFullscreen;
 #endif
@@ -323,7 +322,7 @@ static int present(void)
 	inside_begin_end = 0;
 
 	if(cur_prog) {
-		glUseProgram(0);
+		/*glUseProgram(0);*/
 	}
 
 	return 1;

@@ -2,13 +2,13 @@ src = $(wildcard src/*.c)
 obj = $(src:.c=.o)
 bin = test
 
-vrlib_root = ..
+vrlib_root = $(shell pwd)/..
 vrlib = $(vrlib_root)/libgoatvr.so
 
 warn = -Wall
 
 CFLAGS = -pedantic $(warn) -g `pkg-config --cflags sdl2` -I$(vrlib_root)/src
-LDFLAGS = $(libgl) `pkg-config --libs sdl2` -L$(vrlib_root) -lgoatvr -Wl,-rpath -Wl,$(vrlib_root)/
+LDFLAGS = $(libgl) -L$(vrlib_root) -Wl,-rpath=$(vrlib_root) -lgoatvr `pkg-config --libs sdl2` 
 
 ifeq ($(shell uname -s), Darwin)
 	libgl = -framework OpenGL -lGLEW

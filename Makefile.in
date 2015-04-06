@@ -7,7 +7,7 @@ so_minor = 1
 
 ifdef use_libovr
 	mod_cflags += -DUSE_LIBOVR
-	mod_libs += -lovr
+	mod_libs += -lOVR
 endif
 ifdef use_openhmd
 	mod_cflags += -DUSE_OPENHMD
