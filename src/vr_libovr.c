@@ -102,6 +102,8 @@ static int init(void)
 		set_option_int(optdb, VR_LEYE_YRES, eye_res[0].h);
 		set_option_int(optdb, VR_REYE_XRES, eye_res[1].w);
 		set_option_int(optdb, VR_REYE_YRES, eye_res[1].h);
+		set_option_int(optdb, VR_RENDER_XRES, eye_res[0].w + eye_res[1].w);
+		set_option_int(optdb, VR_RENDER_YRES, eye_res[0].h > eye_res[1].h ? eye_res[0].h : eye_res[1].h);
 		set_option_float(optdb, VR_RENDER_RES_SCALE, 1.0);
 		set_option_float(optdb, VR_EYE_HEIGHT, ovrHmd_GetFloat(hmd, OVR_KEY_EYE_HEIGHT, OVR_DEFAULT_EYE_HEIGHT));
 		set_option_float(optdb, VR_IPD, ovrHmd_GetFloat(hmd, OVR_KEY_IPD, OVR_DEFAULT_IPD));
