@@ -57,6 +57,10 @@ int init(void)
 	int x, y;
 	unsigned int flags;
 
+	if(vr_init() == -1) {
+		return -1;
+	}
+
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 
 	x = y = SDL_WINDOWPOS_UNDEFINED;
@@ -71,10 +75,6 @@ int init(void)
 	}
 
 	glewInit();
-
-	if(vr_init() == -1) {
-		return -1;
-	}
 
 	/* resize our window to match the HMD resolution */
 	win_width = vr_geti(VR_DISPLAY_WIDTH);

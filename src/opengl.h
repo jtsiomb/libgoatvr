@@ -13,12 +13,18 @@
 #include <GL/gl.h>
 #endif
 
+#include "glext.h"
+
 #ifdef __unix__
 #include <GL/glx.h>
 #endif
 
 void vrimp_swap_buffers(void);
 
-void (*vrimp_glfunc(const char *name))();
+#if defined(__unix__)
+#define vrimp_glfunc(n) glXGetProcAddress(n)
+#elif defined(WIN32)
+#define vrimp_glfunc(n)	wglGetProcAddress(n)
+#endif
 
 #endif	/* VR_OPENGL_H_ */

@@ -9,34 +9,10 @@ static void distort_texcoords(float *tc, float aspect, float lens_center_offset,
 		const float *dist_factors);
 static float barrel_scale(float rad, const float *k);
 
-/* let's avoid a glew dependency in the library just for this */
-#ifndef GL_ARRAY_BUFFER
-#define GL_ARRAY_BUFFER			0x8892
-#define GL_ELEMENT_ARRAY_BUFFER 0x8893
-#define GL_STATIC_DRAW			0x88E4
-#endif
-
-#ifndef GL_VERSION_1_5
-static void (*glGenBuffers)(GLsizei, GLuint*);
-static void (*glDeleteBuffers)(GLsizei, GLuint*);
-static void (*glBufferData)(GLenum, unsigned int, const GLvoid*, GLenum);
-static void (*glBindBuffer)(GLenum, GLuint);
-#else
-#ifndef GL_GLEXT_PROTOTYPES
-
-#ifndef GLAPI
-#define GLAPI
-#endif
-#ifndef APIENTRY
-#define APIENTRY
-#endif
-
-GLAPI void APIENTRY glGenBuffers(GLsizei, GLuint*);
-GLAPI void APIENTRY glDeleteBuffers(GLsizei, const GLuint*);
-GLAPI void APIENTRY glBufferData();
-GLAPI void APIENTRY glBindBuffer(GLenum, GLuint);
-#endif
-#endif
+static PFNGLGENBUFFERSARBPROC gl_gen_buffers;
+static PFNGLDELETEBUFFERSARBPROC gl_delete_buffers;
+static PFNGLBUFFERDATAARBPROC gl_buffer_data;
+static PFNGLBINDBUFFERARBPROC gl_bind_buffer;
 
 int vrimp_mesh_init(struct mesh *m)
 {
@@ -47,19 +23,17 @@ int vrimp_mesh_init(struct mesh *m)
 	m->num_verts = m->num_faces = 0;
 	m->vbo = m->ibo = 0;
 
-#ifndef GL_VERSION_1_5
-	if(!glGenBuffers) {
-		glGenBuffers = vrimp_glfunc("glGenBuffersARB");
-		glDeleteBuffers = vrimp_glfunc("glDeleteBuffersARB");
-		glBufferData = vrimp_glfunc("glBufferDataARB");
-		glBindBuffer = vrimp_glfunc("glBindBufferARB");
+	if(!gl_gen_buffers) {
+		gl_gen_buffers = (PFNGLGENBUFFERSARBPROC)vrimp_glfunc("glGenBuffersARB");
+		gl_delete_buffers = (PFNGLDELETEBUFFERSARBPROC)vrimp_glfunc("glDeleteBuffersARB");
+		gl_buffer_data = (PFNGLBUFFERDATAARBPROC)vrimp_glfunc("glBufferDataARB");
+		gl_bind_buffer = (PFNGLBINDBUFFERARBPROC)vrimp_glfunc("glBindBufferARB");
 
-		if(!(glGenBuffers && glDeleteBuffers && glBufferData && glBindBuffer)) {
+		if(!(gl_gen_buffers && gl_delete_buffers && gl_buffer_data && gl_bind_buffer)) {
 			fprintf(stderr, "Failed to load VBO functions\n");
 			return -1;
 		}
 	}
-#endif
 
 	return 0;
 }
@@ -69,8 +43,8 @@ void vrimp_mesh_destroy(struct mesh *m)
 	free(m->varr);
 	free(m->iarr);
 
-	if(m->vbo) glDeleteBuffers(1, &m->vbo);
-	if(m->ibo) glDeleteBuffers(1, &m->ibo);
+	if(m->vbo) gl_delete_buffers(1, &m->vbo);
+	if(m->ibo) gl_delete_buffers(1, &m->ibo);
 }
 
 void vrimp_mesh_draw(struct mesh *m)
@@ -78,15 +52,15 @@ void vrimp_mesh_draw(struct mesh *m)
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
+	gl_bind_buffer(GL_ARRAY_BUFFER, m->vbo);
 	glVertexPointer(3, GL_FLOAT, sizeof(struct vertex), 0);
 	glTexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), (void*)offsetof(struct vertex, tx));
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	gl_bind_buffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 	glDrawElements(GL_TRIANGLES, m->num_faces * 3, GL_UNSIGNED_INT, 0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	gl_bind_buffer(GL_ARRAY_BUFFER, 0);
+	gl_bind_buffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -157,12 +131,12 @@ int vrimp_mesh_barrel_distortion(struct mesh *m, int usub, int vsub, float aspec
 		}
 	}
 
-	glGenBuffers(1, &m->vbo);
-	glGenBuffers(1, &m->ibo);
-	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
-	glBufferData(GL_ARRAY_BUFFER, num_verts * sizeof *varr, varr, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_tris * 3 * sizeof *iarr, iarr, GL_STATIC_DRAW);
+	gl_gen_buffers(1, &m->vbo);
+	gl_gen_buffers(1, &m->ibo);
+	gl_bind_buffer(GL_ARRAY_BUFFER, m->vbo);
+	gl_buffer_data(GL_ARRAY_BUFFER, num_verts * sizeof *varr, varr, GL_STATIC_DRAW);
+	gl_bind_buffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+	gl_buffer_data(GL_ELEMENT_ARRAY_BUFFER, num_tris * 3 * sizeof *iarr, iarr, GL_STATIC_DRAW);
 
 	m->prim = GL_TRIANGLES;
 	m->num_verts = num_verts;

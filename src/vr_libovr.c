@@ -13,20 +13,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include "opengl.h"
 #include "opt.h"
 
 #include <OVR_CAPI.h>
 #include <OVR_CAPI_GL.h>
 
-#ifdef OVR_OS_LINUX
-#include <GL/glx.h>
-#endif
-
-/* undef this if you want the retarded health and safety warning screen */
-#undef DISABLE_RETARDED_HEALTH_WARNING
-
-/* just dropping the prototype here to avoid including CAPI_HSWDisplay.h */
-OVR_EXPORT void ovrhmd_EnableHSWDisplaySDKRender(ovrHmd hmd, ovrBool enabled);
+static PFNGLUSEPROGRAMPROC gl_use_program;
 
 static ovrHmd hmd;
 static void *optdb;
@@ -111,6 +104,10 @@ static int init(void)
 		set_option_int(optdb, VR_WIN_YOFFS, hmd->WindowsPos.y);
 	}
 
+	if(!(gl_use_program = (PFNGLUSEPROGRAMPROC)vrimp_glfunc("glUseProgram"))) {
+		gl_use_program = (PFNGLUSEPROGRAMPROC)vrimp_glfunc("glUseProgramObjectARB");
+	}
+
 	deferred_init_done = 0;
 	return 0;
 }
@@ -177,11 +174,6 @@ static void deferred_init(void)
 		set_option_vec(optdb, VR_LEYE_OFFSET, leye_offs);
 		set_option_vec(optdb, VR_REYE_OFFSET, reye_offs);
 	}
-
-
-#ifdef DISABLE_RETARDED_HEALTH_WARNING
-	ovrhmd_EnableHSWDisplaySDKRender(hmd, 0);
-#endif
 }
 
 static void cleanup(void)
@@ -314,17 +306,19 @@ static void begin(int eye)
 
 static int present(void)
 {
-	int cur_prog;
+	int cur_prog = 0;
 
 	if(!hmd) return 0;
 
-	glGetIntegerv(GL_CURRENT_PROGRAM, &cur_prog);
+	if(gl_use_program) {
+		glGetIntegerv(GL_CURRENT_PROGRAM, &cur_prog);
+	}
 
 	ovrHmd_EndFrame(hmd, pose, &eye_tex[0].Texture);
 	inside_begin_end = 0;
 
-	if(cur_prog) {
-		/*glUseProgram(0);*/
+	if(gl_use_program) {
+		gl_use_program(cur_prog);
 	}
 
 	return 1;
