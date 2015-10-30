@@ -43,10 +43,15 @@ int vr_init(void)
 		set_option_vec3f(defopt, VR_LEYE_OFFSET, -DEF_IPD * 0.5f, 0.0f, 0.0f);
 		set_option_vec3f(defopt, VR_REYE_OFFSET, DEF_IPD * 0.5f, 0.0f, 0.0f);
 
-		if((env = getenv("VR_NULL_STEREO")) && atoi(env)) {
-			set_option_int(defopt, VR_NULL_STEREO, 1);
+		if((env = getenv("VR_NULL_STEREO_SBS")) && atoi(env)) {
+			set_option_int(defopt, VR_NULL_STEREO_SBS, 1);
 		} else {
-			set_option_int(defopt, VR_NULL_STEREO, 0);
+			set_option_int(defopt, VR_NULL_STEREO_SBS, 0);
+		}
+		if((env = getenv("VR_NULL_STEREO_GL")) && atoi(env)) {
+			set_option_int(defopt, VR_NULL_STEREO_GL, 1);
+		} else {
+			set_option_int(defopt, VR_NULL_STEREO_GL, 0);
 		}
 	}
 
@@ -364,7 +369,8 @@ void vr_recenter(void)
 
 static void fallback_present(void)
 {
-	int i, show_both = vr_geti(VR_NULL_STEREO);
+	int i, show_sbs = vr_geti(VR_NULL_STEREO_SBS);
+	int use_quadbuf = vr_geti(VR_NULL_STEREO_GL);
 
 	glPushAttrib(GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 
@@ -386,7 +392,7 @@ static void fallback_present(void)
 	for(i=0; i<2; i++) {
 		float x0, x1;
 
-		if(show_both) {
+		if(show_sbs && !use_quadbuf) {
 			x0 = i == 0 ? -1 : 0;
 			x1 = i == 0 ? 0 : 1;
 		} else {
@@ -395,6 +401,10 @@ static void fallback_present(void)
 		}
 
 		glBindTexture(GL_TEXTURE_2D, rtarg[i].tex);
+
+		if(use_quadbuf) {
+			glDrawBuffer(GL_BACK_LEFT + i);
+		}
 
 		glBegin(GL_QUADS);
 		glTexCoord2f(rtarg[i].umin, rtarg[i].vmin);
@@ -407,7 +417,11 @@ static void fallback_present(void)
 		glVertex2f(x0, 1);
 		glEnd();
 
-		if(!show_both) break;
+		if(!show_sbs && !use_quadbuf) break;
+	}
+
+	if(use_quadbuf) {
+		glDrawBuffer(GL_BACK);
 	}
 
 	glPopMatrix();

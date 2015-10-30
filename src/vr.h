@@ -19,7 +19,8 @@
 #define VR_LEYE_OFFSET		"left-eye-offset"	/* stereo offset from center of the head */
 #define VR_REYE_OFFSET		"right-eye-offset"	/* stereo offset from center of the head */
 /* misc options */
-#define VR_NULL_STEREO		"null-stereo"	/* bool, default 0 */
+#define VR_NULL_STEREO_SBS	"null-stereo-sbs"	/* bool, default 0: draw side-by-side */
+#define VR_NULL_STEREO_GL	"null-stereo-gl"	/* bool, default 0: use quad-buffer stereo */
 
 enum {
 	VR_EYE_LEFT,
