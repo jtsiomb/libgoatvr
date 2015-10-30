@@ -21,6 +21,7 @@
 /* misc options */
 #define VR_NULL_STEREO_SBS	"null-stereo-sbs"	/* bool, default 0: draw side-by-side */
 #define VR_NULL_STEREO_GL	"null-stereo-gl"	/* bool, default 0: use quad-buffer stereo */
+#define VR_NULL_STEREO_REDCYAN	"null-stereo-redcyan"	/* bool, default 0: draw red-cyan anaglyph stereo */
 
 enum {
 	VR_EYE_LEFT,

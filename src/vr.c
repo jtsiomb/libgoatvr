@@ -43,16 +43,12 @@ int vr_init(void)
 		set_option_vec3f(defopt, VR_LEYE_OFFSET, -DEF_IPD * 0.5f, 0.0f, 0.0f);
 		set_option_vec3f(defopt, VR_REYE_OFFSET, DEF_IPD * 0.5f, 0.0f, 0.0f);
 
-		if((env = getenv("VR_NULL_STEREO_SBS")) && atoi(env)) {
-			set_option_int(defopt, VR_NULL_STEREO_SBS, 1);
-		} else {
-			set_option_int(defopt, VR_NULL_STEREO_SBS, 0);
-		}
-		if((env = getenv("VR_NULL_STEREO_GL")) && atoi(env)) {
-			set_option_int(defopt, VR_NULL_STEREO_GL, 1);
-		} else {
-			set_option_int(defopt, VR_NULL_STEREO_GL, 0);
-		}
+		set_option_int(defopt, VR_NULL_STEREO_SBS,
+				(env = getenv("VR_NULL_STEREO_SBS")) && atoi(env) ? 1 : 0);
+		set_option_int(defopt, VR_NULL_STEREO_GL,
+				(env = getenv("VR_NULL_STEREO_GL")) && atoi(env) ? 1 : 0);
+		set_option_int(defopt, VR_NULL_STEREO_REDCYAN,
+				(env = getenv("VR_NULL_STEREO_REDCYAN")) && atoi(env) ? 1 : 0);
 	}
 
 	if(vrm) {
@@ -371,6 +367,7 @@ static void fallback_present(void)
 {
 	int i, show_sbs = vr_geti(VR_NULL_STEREO_SBS);
 	int use_quadbuf = vr_geti(VR_NULL_STEREO_GL);
+	int use_redcyan = vr_geti(VR_NULL_STEREO_REDCYAN);
 
 	glPushAttrib(GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 
@@ -379,6 +376,7 @@ static void fallback_present(void)
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_STENCIL_TEST);
 	glDisable(GL_FOG);
+	glDisable(GL_BLEND);
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -389,10 +387,12 @@ static void fallback_present(void)
 	glPushMatrix();
 	glLoadIdentity();
 
+	glClear(GL_COLOR_BUFFER_BIT);
+
 	for(i=0; i<2; i++) {
 		float x0, x1;
 
-		if(show_sbs && !use_quadbuf) {
+		if(show_sbs && !use_quadbuf && !use_redcyan) {
 			x0 = i == 0 ? -1 : 0;
 			x1 = i == 0 ? 0 : 1;
 		} else {
@@ -406,6 +406,17 @@ static void fallback_present(void)
 			glDrawBuffer(GL_BACK_LEFT + i);
 		}
 
+		if(use_redcyan) {
+			if(i == 0) {
+				glColorMask(1, 0, 0, 1);
+			} else {
+				glColorMask(0, 1, 1, 1);
+
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_ONE, GL_ONE);
+			}
+		}
+
 		glBegin(GL_QUADS);
 		glTexCoord2f(rtarg[i].umin, rtarg[i].vmin);
 		glVertex2f(x0, -1);
@@ -417,11 +428,14 @@ static void fallback_present(void)
 		glVertex2f(x0, 1);
 		glEnd();
 
-		if(!show_sbs && !use_quadbuf) break;
+		if(!show_sbs && !use_quadbuf && !use_redcyan) break;
 	}
 
 	if(use_quadbuf) {
 		glDrawBuffer(GL_BACK);
+	}
+	if(use_redcyan) {
+		glColorMask(1, 1, 1, 1);
 	}
 
 	glPopMatrix();
