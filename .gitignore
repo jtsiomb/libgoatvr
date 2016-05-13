@@ -1,0 +1,10 @@
+*.o
+*.swp
+build/
+Release/
+Debug/
+*.exe
+*.so*
+*.a
+*.dll
+*.lib
