@@ -44,6 +44,9 @@ public:
 
 	virtual Mat4 get_view_matrix(int eye);
 	virtual Mat4 get_proj_matrix(int eye);
+
+	void print_info(const char *fmt, ...) const;
+	void print_error(const char *fmt, ...) const;
 };
 
 }	// namespace goatvr

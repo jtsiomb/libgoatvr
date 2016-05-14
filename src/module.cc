@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdarg.h>
 #include "module.h"
 #include "modman.h"
 
@@ -82,4 +83,26 @@ Mat4 Module::get_view_matrix(int eye)
 Mat4 Module::get_proj_matrix(int eye)
 {
 	return Mat4::identity;
+}
+
+void Module::print_info(const char *fmt, ...) const
+{
+	va_list ap;
+
+	printf("module %s: ", get_name());
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+void Module::print_error(const char *fmt, ...) const
+{
+	va_list ap;
+
+	fprintf(stderr, "module %s: ", get_name());
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
 }
