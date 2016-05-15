@@ -13,14 +13,7 @@ typedef goatvr::Device goatvr_device;
 
 namespace goatvr {
 
-struct GoatVR {
-	std::vector<Module*> modules;
-	std::vector<Device*> devices;
-
-	bool vr_mode;
-};
-
-extern GoatVR *vr;	// global goatvr state object
+unsigned int next_pow2(unsigned int x);
 
 }
 

@@ -2,9 +2,15 @@
 #define OPENGL_H_
 
 #ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+
+#ifndef WINGDIAPI
+#define WINGDIAPI __declspec(dllimport)
 #endif
+#ifndef APIENTRY
+#define APIENTRY __stdcall
+#endif
+
+#endif	// WIN32
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>

@@ -11,10 +11,15 @@ class ModuleOculus : public Module {
 protected:
 	RenderTexture rtex;
 	ovrSession ovr;
+	ovrHmdDesc hmd;
+	ovrEyeRenderDesc rdesc[2];
 	ovrGraphicsLuid ovr_luid;
+	ovrTextureSwapChainData *ovr_rtex;
+	ovrLayerEyeFov ovr_layer;
 
 public:
 	ModuleOculus();
+	~ModuleOculus();
 
 	bool init();
 	void destroy();
@@ -27,9 +32,11 @@ public:
 	void start();
 	void stop();
 
-	RenderTexture *get_render_texture(float fbscale);
+	void update();
 
-	void draw_eye(int eye);
+	void set_fbsize(int width, int height, float fbscale);
+	RenderTexture *get_render_texture();
+
 	void draw_done();
 
 	Mat4 get_view_matrix(int eye);

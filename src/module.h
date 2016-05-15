@@ -36,9 +36,10 @@ public:
 	virtual void update();
 
 	// rendering ops are only valid on rendering modules
-	virtual void set_fbsize(int width, int height);
-	virtual RenderTexture *get_render_texture(float fbscale);
+	virtual void set_fbsize(int width, int height, float fbscale);
+	virtual RenderTexture *get_render_texture();
 
+	virtual void draw_start();
 	virtual void draw_eye(int eye);
 	virtual void draw_done();
 

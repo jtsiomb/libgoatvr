@@ -14,7 +14,6 @@ Module::Module()
 
 Module::~Module()
 {
-	destroy();
 }
 
 bool Module::init()
@@ -58,13 +57,17 @@ void Module::update()
 {
 }
 
-void Module::set_fbsize(int width, int height)
+void Module::set_fbsize(int width, int height, float fbscale)
 {
 }
 
-RenderTexture *Module::get_render_texture(float s)
+RenderTexture *Module::get_render_texture()
 {
 	return 0;
+}
+
+void Module::draw_start()
+{
 }
 
 void Module::draw_eye(int eye)
