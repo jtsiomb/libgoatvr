@@ -83,7 +83,7 @@ Mat4 Module::get_view_matrix(int eye)
 	return Mat4::identity;
 }
 
-Mat4 Module::get_proj_matrix(int eye)
+Mat4 Module::get_proj_matrix(int eye, float znear, float zfar)
 {
 	return Mat4::identity;
 }

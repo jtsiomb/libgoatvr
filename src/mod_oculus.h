@@ -40,7 +40,7 @@ public:
 	void draw_done();
 
 	Mat4 get_view_matrix(int eye);
-	Mat4 get_proj_matrix(int eye);
+	Mat4 get_proj_matrix(int eye, float znear, float zfar);
 };
 
 }	// namespace goatvr

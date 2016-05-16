@@ -200,3 +200,14 @@ void ModuleOculus::draw_done()
 		break;
 	}
 }
+
+Mat4 ModuleOculus::get_view_matrix(int eye)
+{
+	return Mat4::identity;
+}
+
+Mat4 ModuleOculus::get_proj_matrix(int eye, float znear, float zfar)
+{
+	Mat4 m = *(Mat4*)&ovrMatrix4f_Projection(rdesc[eye].Fov, znear, zfar, ovrProjection_ClipRangeOpenGL);
+	return transpose(m);
+}
