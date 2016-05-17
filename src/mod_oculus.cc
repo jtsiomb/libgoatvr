@@ -6,11 +6,17 @@
 
 using namespace goatvr;
 
+static ModuleOculus mod_auto_reg;
+
 ModuleOculus::ModuleOculus()
 {
 	memset(&rtex, 0, sizeof rtex);
 	rtex.fbscale = 1.0f;
 	ovr_rtex = 0;
+
+	ovr_mirtex = 0;
+	mirtex_width = mirtex_height = -1;
+	win_width = win_height = -1;
 }
 
 ModuleOculus::~ModuleOculus()
@@ -47,7 +53,7 @@ const char *ModuleOculus::get_name() const
 	return "oculus";
 }
 
-void ModuleOculus::detect()
+bool ModuleOculus::detect()
 {
 	print_info("running HMD detection\n");
 
@@ -55,11 +61,12 @@ void ModuleOculus::detect()
 	if(hmd.Type == ovrHmd_None) {
 		print_info("none available\n");
 		avail = false;
-		return;
+		return false;
 	}
 
 	print_info("HMD found: %s - %s\n", hmd.Manufacturer, hmd.ProductName);
 	avail = true;
+	return true;
 }
 
 void ModuleOculus::start()
@@ -107,6 +114,9 @@ void ModuleOculus::update()
 void ModuleOculus::set_fbsize(int width, int height, float fbscale)
 {
 	rtex.fbscale = fbscale;
+	// this is only used for the mirror texture
+	win_width = width;
+	win_height = height;
 }
 
 RenderTexture *ModuleOculus::get_render_texture()
@@ -173,7 +183,27 @@ RenderTexture *ModuleOculus::get_render_texture()
 		ovr_layer.Viewport[i].Pos = {rtex.eye_xoffs[i], rtex.eye_yoffs[i]};
 		ovr_layer.Viewport[i].Size = {rtex.eye_width[i], rtex.eye_height[i]};
 	}
-	return 0;
+
+	// create the mirror texture if necessary (TODO)
+#if 0
+	int new_mtex_width = next_pow2(win_width);
+	int new_mtex_height = next_pow2(win_height);
+	if(!ovr_mirtex || mirtex_width != new_mtex_width || mirtex_height != new_mtex_height) {
+		ovrMirrorTextureDesc desc;
+		desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+		desc.Width = new_mtex_width;
+		desc.Height = new_mtex_height;
+
+		if(ovr_CreateMirrorTextureGL(ovr, &desc, &ovr_mirtex) != 0) {
+			print_error("failed to create mirror texture (%dx%d)\n", new_mtex_width, new_mtex_height);
+			ovr_mirtex = 0;
+		}
+		mirtex_width = new_mtex_width;
+		mirtex_height = new_mtex_height;
+	}
+#endif
+	
+	return &rtex;
 }
 
 void ModuleOculus::draw_done()

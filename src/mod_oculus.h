@@ -17,6 +17,13 @@ protected:
 	ovrTextureSwapChainData *ovr_rtex;
 	ovrLayerEyeFov ovr_layer;
 
+	double input_time;
+
+	ovrMirrorTextureData *ovr_mirtex;
+	int mirtex_width, mirtex_height;
+	int win_width, win_height;
+
+
 public:
 	ModuleOculus();
 	~ModuleOculus();
@@ -27,7 +34,7 @@ public:
 	ModuleType get_type() const;
 	const char *get_name() const;
 
-	void detect();
+	bool detect();
 
 	void start();
 	void stop();

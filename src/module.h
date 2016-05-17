@@ -23,7 +23,7 @@ public:
 	virtual ModuleType get_type() const = 0;
 	virtual const char *get_name() const = 0;
 
-	virtual void detect() = 0;
+	virtual bool detect() = 0;
 	virtual bool usable() const;
 
 	virtual void activate();

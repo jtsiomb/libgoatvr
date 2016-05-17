@@ -39,8 +39,8 @@ void goatvr_stopvr(void);	/* exit virtual reality */
 int goatvr_invr(void);		/* are we in VR? */
 
 /* ---- rendering ---- */
-void goatvr_set_fb_size(float sz);	/* 1.0 for default */
-float goatvr_get_fb_size(void);
+void goatvr_set_fb_size(int width, int height, float scale);
+float goatvr_get_fb_scale(void);
 
 /* framebuffer width and height (both viewports) */
 int goatvr_get_fb_width(void);
@@ -57,21 +57,19 @@ unsigned int goatvr_get_fb_texture(void);
 int goatvr_get_fb_texture_width(void);
 int goatvr_get_fb_texture_height(void);
 
-/* set a custom FBO to use (color attachement must be the texture returned by
- * goatvr_get_fb_texture) */
-void goatvr_set_fbo(unsigned int fbo);
 /* get the framebuffer object used as a VR render target. If an FBO wasn't
  * explicitly set with goatvr_set_fbo, then one is created automatically */
 unsigned int goatvr_get_fbo(void);
 
 /* call glViewport for this eye */
-int goatvr_viewport(int eye);
+void goatvr_viewport(int eye);
 
 float *goatvr_view_matrix(int eye);
-float *goatvr_projection_matrix(int eye);
+float *goatvr_projection_matrix(int eye, float znear, float zfar);
 
 /* start drawing for the specified eye.
- * it automatically binds the FBO, and calls glViewport */
+ * it automatically binds the FBO, and calls glViewport
+ */
 void goatvr_draw_eye(int eye);
 /* done drawing both eyes, the frame is ready to be presented */
 void goatvr_draw_done(void);
