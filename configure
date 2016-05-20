@@ -1,0 +1,23 @@
+#!/bin/sh
+
+out=reg_modules.cc
+
+echo '// generated file, do not edit!' >$out
+echo 'namespace goatvr {' >>$out
+echo >>$out
+
+for i in src/mod_*.cc; do
+	name=`basename $i .cc`
+	echo "void register_$name();" >>$out
+done
+
+echo >>$out
+echo 'void register_modules()' >>$out
+echo '{' >>$out
+for i in src/mod_*.cc; do
+	name=`basename $i .cc`
+	echo "	register_$name();" >>$out
+done
+echo '}' >>$out
+echo >>$out
+echo '} // namespace goat' >>$out

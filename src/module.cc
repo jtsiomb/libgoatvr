@@ -8,8 +8,7 @@ using namespace goatvr;
 Module::Module()
 {
 	avail = act = false;
-
-	add_module(this);	// register ourselves
+	prio = 0;
 }
 
 Module::~Module()
@@ -23,6 +22,16 @@ bool Module::init()
 
 void Module::destroy()
 {
+}
+
+void Module::set_priority(int p)
+{
+	prio = p;
+}
+
+int Module::get_priority() const
+{
+	return prio;
 }
 
 bool Module::usable() const

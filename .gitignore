@@ -8,3 +8,4 @@ Debug/
 *.a
 *.dll
 *.lib
+reg_modules.cc

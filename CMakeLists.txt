@@ -19,6 +19,14 @@ file(GLOB src "src/*.cc")
 file(GLOB hdr "src/*.h")
 file(GLOB pubhdr "include/*.h")
 
+# this will generate a file called reg_modules.cc which we'll add to the build
+if(WIN32)
+	execute_process(COMMAND configure.bat WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+else()
+	execute_process(COMMAND ./configure WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+endif()
+list(APPEND src reg_modules.cc)
+
 if(mod_oculus)
 	list(APPEND mod_libs LibOVR)
 else()

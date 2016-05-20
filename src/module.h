@@ -4,6 +4,13 @@
 #include <gmath/gmath.h>
 #include "rtex.h"
 
+// use this in mod_whatever.cc to register each module: REG_MODULE(whatever, ModuleWhatever)
+#define REG_MODULE(name, class_name) \
+	namespace goatvr { \
+		void add_module(Module*); \
+		void register_mod_##name() { add_module(new class_name); } \
+	}
+
 namespace goatvr {
 
 // rendering modules can only be enabled one at a time
@@ -11,6 +18,7 @@ enum ModuleType { MODULE_RENDERING, MODULE_OTHER };
 
 class Module {
 protected:
+	int prio;
 	bool avail, act;
 
 public:
@@ -22,6 +30,9 @@ public:
 
 	virtual ModuleType get_type() const = 0;
 	virtual const char *get_name() const = 0;
+
+	virtual void set_priority(int p);
+	virtual int get_priority() const;
 
 	virtual bool detect() = 0;
 	virtual bool usable() const;

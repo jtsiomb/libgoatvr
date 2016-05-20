@@ -4,6 +4,10 @@
 
 using namespace goatvr;
 
+namespace goatvr {
+void register_modules();	// auto-generated function during build
+}
+
 extern "C" {
 
 static bool in_vr;
@@ -17,12 +21,20 @@ static int fbo_width, fbo_height;
 
 int goatvr_init()
 {
-	return -1;
+	if(!init_opengl()) {
+		fprintf(stderr, "goatvr: opengl init failed\n");
+		return -1;
+	}
+	register_modules();
+	goatvr_detect();
+	return render_module ? 0 : -1;
 }
 
 void goatvr_shutdown()
 {
-	if(zbuf) {
+	if(fbo) {
+		glDeleteFramebuffers(1, &fbo);
+		glDeleteRenderbuffers(1, &zbuf);
 	}
 }
 
@@ -31,6 +43,9 @@ void goatvr_detect()
 	printf("goatvr: module detection running for %d total modules ...\n", get_num_modules());
 	detect();
 
+	Module *rmod = 0;
+	int max_prio = -1;
+
 	printf("goatvr: detected %d usable modules:\n", get_num_usable_modules());
 	for(int i=0; i<get_num_modules(); i++) {
 		Module *m = get_module(i);
@@ -38,9 +53,25 @@ void goatvr_detect()
 			printf("  %s", m->get_name());
 			if(m->get_type() == MODULE_RENDERING) {
 				printf(" (rendering module)\n");
+				int p = m->get_priority();
+				if(p > max_prio) {
+					rmod = m;
+					max_prio = p;
+				}
 			} else {
 				putchar('\n');
+				activate(m);	// activate all usable non-rendering modules
 			}
+		}
+	}
+
+	// only do the following if we haven't already activated a render module
+	if(!render_module) {
+		if(!rmod) {
+			printf("no usable render module found!\n");
+		} else {
+			// activate the highest priority render module
+			activate(rmod);
 		}
 	}
 }

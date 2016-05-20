@@ -4,9 +4,9 @@
 #include "mod_oculus.h"
 #include "goatvr_impl.h"
 
-using namespace goatvr;
+REG_MODULE(oculus, ModuleOculus)
 
-static ModuleOculus mod_auto_reg;
+using namespace goatvr;
 
 ModuleOculus::ModuleOculus()
 {

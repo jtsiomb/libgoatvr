@@ -4,6 +4,18 @@
 #include <algorithm>
 #include "modman.h"
 
+static struct {
+	const char *name;
+	int prio;
+} modprio[] = {
+	{ "oculus", 128 },
+	{ "openvr", 127 },
+	{ "glstereo", 64 },
+	{ "anaglyph", 63},
+	{ "sbs", 62},
+	{0, 0}
+};
+
 namespace goatvr {
 
 Module *render_module;
@@ -15,7 +27,19 @@ static int num_avail;
 void add_module(Module *m)
 {
 	if(std::find(modules.begin(), modules.end(), m) == modules.end()) {
+		if(!m->init()) {
+			return;
+		}
 		modules.push_back(m);
+
+		if(m->get_type() == MODULE_RENDERING) {
+			// assign a priority
+			for(int i=0; modprio[i].name; i++) {
+				if(strcmp(m->get_name(), modprio[i].name) == 0) {
+					m->set_priority(modprio[i].prio);
+				}
+			}
+		}
 	}
 }
 
@@ -59,9 +83,9 @@ void activate(Module *m)
 	// only allow a single active rendering module
 	if(render_module && m->get_type() == MODULE_RENDERING) {
 		deactivate(render_module);
-		render_module = m;
 	}
 	active.insert(m);
+	render_module = m;
 }
 
 void deactivate(Module *m)
