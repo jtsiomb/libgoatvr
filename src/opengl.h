@@ -1,6 +1,8 @@
 #ifndef OPENGL_H_
 #define OPENGL_H_
 
+#include <assert.h>
+
 #ifdef WIN32
 
 #ifndef WINGDIAPI
@@ -10,6 +12,9 @@
 #define APIENTRY __stdcall
 #endif
 
+#define GLAPI APIENTRY
+#else
+#define GLAPI
 #endif	/* WIN32 */
 
 #ifdef __APPLE__
@@ -33,16 +38,16 @@ bool init_opengl();
 #define GL_STENCIL_ATTACHMENT	0x8d20
 #define GL_FRAMEBUFFER_COMPLETE	0x8cd5
 
-typedef void (*GLGenFramebuffersFunc)(GLsizei n, GLuint *bufs);
-typedef void (*GLDeleteFramebuffersFunc)(GLsizei n, GLuint *bufs);
-typedef void (*GLBindFramebufferFunc)(GLenum target, GLuint fbo);
-typedef void (*GLFramebufferTexture2DFunc)(GLenum target, GLenum attachment, GLenum textarget, GLuint tex, GLint level);
-typedef void (*GLFramebufferRenderbufferFunc)(GLenum target, GLenum attachment, GLenum rbtarget, GLuint rbuf);
-typedef void (*GLGenRenderbuffersFunc)(GLsizei n, GLuint *bufs);
-typedef void (*GLDeleteRenderbuffersFunc)(GLsizei n, GLuint *bufs);
-typedef void (*GLBindRenderbufferFunc)(GLenum target, GLuint rbuf);
-typedef void (*GLRenderbufferStorageFunc)(GLenum target, GLenum ifmt, GLsizei width, GLsizei height);
-typedef GLenum (*GLCheckFramebufferStatusFunc)(GLenum target);
+typedef void (GLAPI *GLGenFramebuffersFunc)(GLsizei n, GLuint *bufs);
+typedef void (GLAPI *GLDeleteFramebuffersFunc)(GLsizei n, GLuint *bufs);
+typedef void (GLAPI *GLBindFramebufferFunc)(GLenum target, GLuint fbo);
+typedef void (GLAPI *GLFramebufferTexture2DFunc)(GLenum target, GLenum attachment, GLenum textarget, GLuint tex, GLint level);
+typedef void (GLAPI *GLFramebufferRenderbufferFunc)(GLenum target, GLenum attachment, GLenum rbtarget, GLuint rbuf);
+typedef void (GLAPI *GLGenRenderbuffersFunc)(GLsizei n, GLuint *bufs);
+typedef void (GLAPI *GLDeleteRenderbuffersFunc)(GLsizei n, GLuint *bufs);
+typedef void (GLAPI *GLBindRenderbufferFunc)(GLenum target, GLuint rbuf);
+typedef void (GLAPI *GLRenderbufferStorageFunc)(GLenum target, GLenum ifmt, GLsizei width, GLsizei height);
+typedef GLenum (GLAPI *GLCheckFramebufferStatusFunc)(GLenum target);
 
 extern GLGenFramebuffersFunc glGenFramebuffers;
 extern GLDeleteFramebuffersFunc glDeleteFramebuffers;
@@ -57,5 +62,7 @@ extern GLCheckFramebufferStatusFunc glCheckFramebufferStatus;
 #endif	// !GL_VERSION_3_0
 
 }	// namespace goatvr
+
+#define CHECK_GLERROR	assert(glGetError() == GL_NO_ERROR)
 
 #endif	/* OPENGL_H_ */

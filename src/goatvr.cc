@@ -204,6 +204,8 @@ int goatvr_get_fb_texture_height()
 
 unsigned int goatvr_get_fbo(void)
 {
+	static unsigned int last_tex;	// last texture we got from Module::get_render_texture()
+
 	if(!render_module) {
 		return 0;
 	}
@@ -218,20 +220,28 @@ unsigned int goatvr_get_fbo(void)
 		glGenRenderbuffers(1, &zbuf);
 	}
 
-	// resize fbo if necessary (or if it's the first time)
-	if(fbo_width != rtex->width || fbo_height != rtex->height) {
-		fbo_width = rtex->width;
-		fbo_height = rtex->height;
-
+	/* every time we call Module::get_render_texture() we might get a different texture
+	 * make sure to re-bind it as the fbo color attachment if it changed
+	 */
+	if(last_tex != rtex->tex) {
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtex->tex, 0);
+		last_tex = rtex->tex;
+	}
+
+	// resize fbo if necessary (or if it's the first time)
+	if(fbo_width != rtex->tex_width || fbo_height != rtex->tex_height) {
+		fbo_width = rtex->tex_width;
+		fbo_height = rtex->tex_height;
 
 		glBindRenderbuffer(GL_RENDERBUFFER, zbuf);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbo_width, fbo_height);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, zbuf);
 
-		if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-			fprintf(stderr, "goatvr: incomplete framebuffer!\n");
+		GLenum fbst = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		if(fbst != GL_FRAMEBUFFER_COMPLETE) {
+			fprintf(stderr, "goatvr: incomplete framebuffer! (status: %x)\n", (unsigned int)fbst);
 			return 0;
 		}
 	}
@@ -275,11 +285,14 @@ void goatvr_draw_eye(int eye)
 	if(!render_module) return;
 
 	if(!in_drawing) {
+		update();
+
 		/* NOTE: we must call goatvr_get_fbo instead of accessing fbo directly here
 		 * to make sure we have an up to date render texture and framebuffer object
 		 */
 		glBindFramebuffer(GL_FRAMEBUFFER, goatvr_get_fbo());
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		CHECK_GLERROR;
 
 		render_module->draw_start();
 		in_drawing = true;
@@ -296,6 +309,8 @@ void goatvr_draw_done()
 	in_drawing = false;
 
 	render_module->draw_done();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 }	// extern "C"

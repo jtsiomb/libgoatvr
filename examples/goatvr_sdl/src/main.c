@@ -7,14 +7,19 @@
 static int init(void);
 static void cleanup(void);
 static void draw(void);
+static void draw_scene();
+static void draw_box(float xsz, float ysz, float zsz, float norm_sign);
 static void reshape(int x, int y);
 static void handle_event(SDL_Event *ev);
 static void handle_key(int key, int press);
+static unsigned int gen_chess_tex(float r0, float g0, float b0, float r1, float g1, float b1);
 
 static SDL_Window *win;
 static SDL_GLContext ctx;
 static int width, height;
 static int done;
+
+static unsigned int chess_tex;
 
 int main(int argc, char **argv)
 {
@@ -61,12 +66,17 @@ static int init(void)
 {
 	glClearColor(1, 0, 0, 1);
 
+	glEnable(GL_FRAMEBUFFER_SRGB);
+	glGetError();	// ignore error if we don't have the extension
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+
+	chess_tex = gen_chess_tex(1.0, 0.7, 0.4, 0.4, 0.7, 1.0);
 
 	if(goatvr_init() == -1) {
 		return -1;
 	}
+	goatvr_startvr();
 
 	return 0;
 }
@@ -74,6 +84,8 @@ static int init(void)
 static void cleanup(void)
 {
 	goatvr_shutdown();
+
+	glDeleteTextures(1, &chess_tex);
 
 	if(ctx) {
 		SDL_GL_DeleteContext(ctx);
@@ -86,15 +98,162 @@ static void cleanup(void)
 
 static void draw(void)
 {
+	int i;
+
+	assert(glGetError() == GL_NO_ERROR);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	assert(glGetError() == GL_NO_ERROR);
+
+	for(i=0; i<2; i++) {
+		goatvr_draw_eye(i);
+
+		assert(glGetError() == GL_NO_ERROR);
+
+		glMatrixMode(GL_PROJECTION);
+		glLoadMatrixf(goatvr_projection_matrix(i, 0.5, 500.0));
+		glMatrixMode(GL_MODELVIEW);
+		glLoadMatrixf(goatvr_view_matrix(i));
+
+		assert(glGetError() == GL_NO_ERROR);
+		draw_scene();
+		assert(glGetError() == GL_NO_ERROR);
+	}
+	goatvr_draw_done();
+
+	/* goatvr calls above change the viewport */
+	glViewport(0, 0, width, height);
+	/* TODO: draw on regular window */
 
 	SDL_GL_SwapWindow(win);
 	assert(glGetError() == GL_NO_ERROR);
 }
 
+static void draw_scene()
+{
+	float grey[] = {0.8, 0.8, 0.8, 1};
+	float col[] = {0, 0, 0, 1};
+	float lpos[][4] = {
+		{-8, 2, 10, 1},
+		{0, 15, 0, 1}
+	};
+	float lcol[][4] = {
+		{0.8, 0.8, 0.8, 1},
+		{0.4, 0.3, 0.3, 1}
+	};
+
+	for(int i=0; i<2; i++) {
+		glLightfv(GL_LIGHT0 + i, GL_POSITION, lpos[i]);
+		glLightfv(GL_LIGHT0 + i, GL_DIFFUSE, lcol[i]);
+	}
+
+	assert(glGetError() == GL_NO_ERROR);
+
+	glMatrixMode(GL_MODELVIEW);
+
+	glPushMatrix();
+	glTranslatef(0, 10, 0);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, grey);
+	glBindTexture(GL_TEXTURE_2D, chess_tex);
+	glEnable(GL_TEXTURE_2D);
+	draw_box(30, 20, 30, -1.0);
+	glDisable(GL_TEXTURE_2D);
+	glPopMatrix();
+
+	assert(glGetError() == GL_NO_ERROR);
+
+	for(int i=0; i<4; i++) {
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, grey);
+		glPushMatrix();
+		glTranslatef(i & 1 ? 5 : -5, 1, i & 2 ? -5 : 5);
+		draw_box(0.5, 2, 0.5, 1.0);
+		glPopMatrix();
+
+		col[0] = i & 1 ? 1.0 : 0.3;
+		col[1] = i == 0 ? 1.0 : 0.3;
+		col[2] = i & 2 ? 1.0 : 0.3;
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
+
+		glPushMatrix();
+		if(i & 1) {
+			glTranslatef(0, 0.25, i & 2 ? 2 : -2);
+		} else {
+			glTranslatef(i & 2 ? 2 : -2, 0.25, 0);
+		}
+		draw_box(0.5, 0.5, 0.5, 1.0);
+		glPopMatrix();
+	}
+
+	assert(glGetError() == GL_NO_ERROR);
+
+	col[0] = 1;
+	col[1] = 1;
+	col[2] = 0.4;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
+	draw_box(0.05, 1.2, 6, 1.0);
+	draw_box(6, 1.2, 0.05, 1.0);
+
+	assert(glGetError() == GL_NO_ERROR);
+}
+
+static void draw_box(float xsz, float ysz, float zsz, float norm_sign)
+{
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glScalef(xsz * 0.5, ysz * 0.5, zsz * 0.5);
+
+	if(norm_sign < 0.0) {
+		glFrontFace(GL_CW);
+	}
+
+	glBegin(GL_QUADS);
+	glNormal3f(0, 0, 1 * norm_sign);
+	glTexCoord2f(0, 0); glVertex3f(-1, -1, 1);
+	glTexCoord2f(1, 0); glVertex3f(1, -1, 1);
+	glTexCoord2f(1, 1); glVertex3f(1, 1, 1);
+	glTexCoord2f(0, 1); glVertex3f(-1, 1, 1);
+	glNormal3f(1 * norm_sign, 0, 0);
+	glTexCoord2f(0, 0); glVertex3f(1, -1, 1);
+	glTexCoord2f(1, 0); glVertex3f(1, -1, -1);
+	glTexCoord2f(1, 1); glVertex3f(1, 1, -1);
+	glTexCoord2f(0, 1); glVertex3f(1, 1, 1);
+	glNormal3f(0, 0, -1 * norm_sign);
+	glTexCoord2f(0, 0); glVertex3f(1, -1, -1);
+	glTexCoord2f(1, 0); glVertex3f(-1, -1, -1);
+	glTexCoord2f(1, 1); glVertex3f(-1, 1, -1);
+	glTexCoord2f(0, 1); glVertex3f(1, 1, -1);
+	glNormal3f(-1 * norm_sign, 0, 0);
+	glTexCoord2f(0, 0); glVertex3f(-1, -1, -1);
+	glTexCoord2f(1, 0); glVertex3f(-1, -1, 1);
+	glTexCoord2f(1, 1); glVertex3f(-1, 1, 1);
+	glTexCoord2f(0, 1); glVertex3f(-1, 1, -1);
+	glEnd();
+	glBegin(GL_TRIANGLE_FAN);
+	glNormal3f(0, 1 * norm_sign, 0);
+	glTexCoord2f(0.5, 0.5); glVertex3f(0, 1, 0);
+	glTexCoord2f(0, 0); glVertex3f(-1, 1, 1);
+	glTexCoord2f(1, 0); glVertex3f(1, 1, 1);
+	glTexCoord2f(1, 1); glVertex3f(1, 1, -1);
+	glTexCoord2f(0, 1); glVertex3f(-1, 1, -1);
+	glTexCoord2f(0, 0); glVertex3f(-1, 1, 1);
+	glEnd();
+	glBegin(GL_TRIANGLE_FAN);
+	glNormal3f(0, -1 * norm_sign, 0);
+	glTexCoord2f(0.5, 0.5); glVertex3f(0, -1, 0);
+	glTexCoord2f(0, 0); glVertex3f(-1, -1, -1);
+	glTexCoord2f(1, 0); glVertex3f(1, -1, -1);
+	glTexCoord2f(1, 1); glVertex3f(1, -1, 1);
+	glTexCoord2f(0, 1); glVertex3f(-1, -1, 1);
+	glTexCoord2f(0, 0); glVertex3f(-1, -1, -1);
+	glEnd();
+
+	glFrontFace(GL_CCW);
+	glPopMatrix();
+}
+
 static void reshape(int x, int y)
 {
-	glViewport(0, 0, x, y);
+	width = x;
+	height = y;
 }
 
 static void handle_event(SDL_Event *ev)
@@ -129,4 +288,30 @@ static void handle_key(int key, int press)
 			break;
 		}
 	}
+}
+
+/* generate a chessboard texture with tiles colored (r0, g0, b0) and (r1, g1, b1) */
+static unsigned int gen_chess_tex(float r0, float g0, float b0, float r1, float g1, float b1)
+{
+	unsigned int tex;
+	unsigned char img[8 * 8 * 3];
+	unsigned char *pix = img;
+
+	for(int i=0; i<8; i++) {
+		for(int j=0; j<8; j++) {
+			int black = (i & 1) == (j & 1);
+			pix[0] = (black ? r0 : r1) * 255;
+			pix[1] = (black ? g0 : g1) * 255;
+			pix[2] = (black ? b0 : b1) * 255;
+			pix += 3;
+		}
+	}
+
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+
+	return tex;
 }

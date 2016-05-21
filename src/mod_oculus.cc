@@ -12,6 +12,8 @@ using namespace goatvr;
 
 ModuleOculus::ModuleOculus()
 {
+	ovr = 0;
+
 	memset(&rtex, 0, sizeof rtex);
 	rtex.fbscale = 1.0f;
 	ovr_rtex = 0;
@@ -126,8 +128,8 @@ RenderTexture *ModuleOculus::get_render_texture()
 	ovrSizei texsz[2];
 	for(int i=0; i<2; i++) {
 		ovrEyeType eye = (ovrEyeType)i;
-		texsz[0] = ovr_GetFovTextureSize(ovr, eye, hmd.DefaultEyeFov[i], rtex.fbscale);
-		rdesc[2] = ovr_GetRenderDesc(ovr, eye, hmd.DefaultEyeFov[i]);
+		texsz[i] = ovr_GetFovTextureSize(ovr, eye, hmd.DefaultEyeFov[i], rtex.fbscale);
+		rdesc[i] = ovr_GetRenderDesc(ovr, eye, hmd.DefaultEyeFov[i]);
 
 		rtex.eye_width[i] = texsz[i].w;
 		rtex.eye_height[i] = texsz[i].h;
