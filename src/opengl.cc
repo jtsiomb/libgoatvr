@@ -57,7 +57,7 @@ glfunc_type load_glext(const char *name)
 
 glfunc_type load_glext(const char *name)
 {
-	return (glfunc_type)glXGetProcAddress(name);
+	return (glfunc_type)glXGetProcAddress((unsigned char*)name);
 }
 
 #else

@@ -188,7 +188,7 @@ int goatvr_get_fb_texture_width()
 {
 	if(render_module) {
 		RenderTexture *rtex = render_module->get_render_texture();
-		rtex->tex_width;
+		return rtex->tex_width;
 	}
 	return next_pow2(cur_fbwidth);
 }
@@ -197,7 +197,7 @@ int goatvr_get_fb_texture_height()
 {
 	if(render_module) {
 		RenderTexture *rtex = render_module->get_render_texture();
-		rtex->tex_height;
+		return rtex->tex_height;
 	}
 	return next_pow2(cur_fbheight);
 }

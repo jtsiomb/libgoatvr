@@ -28,10 +28,8 @@ endif()
 list(APPEND src reg_modules.cc)
 
 if(mod_oculus)
+	add_definitions(-DUSE_MOD_OCULUS)
 	list(APPEND mod_libs LibOVR)
-else()
-	list(REMOVE_ITEM src "src/mod_oculus.cc")
-	list(REMOVE_ITEM hdr "src/mod_oculus.h")
 endif()
 
 add_library(libgoatvr SHARED ${src} ${hdr} ${pubhdr})
@@ -43,8 +41,8 @@ set_target_properties(libgoatvr PROPERTIES SOVERSION ${SO_MAJOR})
 target_include_directories(libgoatvr PUBLIC include)
 target_include_directories(libgoatvr-static PUBLIC include)
 
-target_link_libraries(libgoatvr libgmath ${mod_libs} ${OPENGL_LIBRARIES})
-target_link_libraries(libgoatvr-static libgmath ${mod_libs} ${OPENGL_LIBRARIES})
+target_link_libraries(libgoatvr gmath ${mod_libs} ${OPENGL_LIBRARIES})
+target_link_libraries(libgoatvr-static gmath ${mod_libs} ${OPENGL_LIBRARIES})
 
 if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4996")

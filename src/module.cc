@@ -34,6 +34,11 @@ int Module::get_priority() const
 	return prio;
 }
 
+bool Module::detect()
+{
+	return false;
+}
+
 bool Module::usable() const
 {
 	return avail;

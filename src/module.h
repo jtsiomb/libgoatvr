@@ -11,6 +11,12 @@
 		void register_mod_##name() { add_module(new class_name); } \
 	}
 
+// use this in mod_whatever.cc when you DON'T want to register that module: NOREG_MODULE(whatever)
+#define NOREG_MODULE(name) \
+	namespace goatvr { \
+		void register_mod_##name() {} \
+	}
+
 namespace goatvr {
 
 // rendering modules can only be enabled one at a time
@@ -34,7 +40,7 @@ public:
 	virtual void set_priority(int p);
 	virtual int get_priority() const;
 
-	virtual bool detect() = 0;
+	virtual bool detect();
 	virtual bool usable() const;
 
 	virtual void activate();

@@ -1,3 +1,5 @@
+#ifdef USE_MOD_OCULUS
+
 #include <string.h>
 #include <algorithm>
 #include "opengl.h"
@@ -241,3 +243,11 @@ Mat4 ModuleOculus::get_proj_matrix(int eye, float znear, float zfar)
 	Mat4 m = *(Mat4*)&ovrMatrix4f_Projection(rdesc[eye].Fov, znear, zfar, ovrProjection_ClipRangeOpenGL);
 	return transpose(m);
 }
+
+#else
+
+#include "module.h"
+// this expands to an empty register_mod_oculus() function
+NOREG_MODULE(oculus)
+
+#endif	// USE_MOD_OCULUS
