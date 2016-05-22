@@ -2,8 +2,13 @@
 #define GOATVR_IMPL_H_
 
 #include <vector>
-#include "module.h"
-#include "device.h"
+
+namespace goatvr {
+
+class Module;
+class Device;
+
+}
 
 typedef goatvr::Module goatvr_module;
 typedef goatvr::Device goatvr_device;

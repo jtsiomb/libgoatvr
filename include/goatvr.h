@@ -6,6 +6,8 @@ typedef void goatvr_module;
 typedef void goatvr_device;
 #endif
 
+enum goatvr_origin_mode { GOATVR_FLOOR, GOATVR_HEAD };
+
 enum { GOATVR_LEFT, GOATVR_RIGHT };
 
 enum {
@@ -38,6 +40,14 @@ void goatvr_startvr(void);	/* enter virtual reality */
 void goatvr_stopvr(void);	/* exit virtual reality */
 int goatvr_invr(void);		/* are we in VR? */
 
+/* GOATVR_FLOOR: the origin height is always at the user's floor level, and
+ *  goatvr_recenter affects only the x/z components of the origin (default).
+ * GOATVR_HEAD: the origin is at the users head, and is reset to the current
+ *  head position every time goatvr_recenter is called.
+ */
+void goatvr_set_origin_mode(enum goatvr_origin_mode origin);
+enum goatvr_origin_mode goatvr_get_origin_mode(void);
+
 /* ---- rendering ---- */
 void goatvr_set_fb_size(int width, int height, float scale);
 float goatvr_get_fb_scale(void);
@@ -67,9 +77,9 @@ void goatvr_viewport(int eye);
 float *goatvr_view_matrix(int eye);
 float *goatvr_projection_matrix(int eye, float znear, float zfar);
 
-/* start drawing for the specified eye.
- * it automatically binds the FBO, and calls glViewport
- */
+/* start drawing prepares for VR drawing, and binds FBO. */
+void goatvr_draw_start(void);
+ /* call before drawing each eye. calls glViewport internally */
 void goatvr_draw_eye(int eye);
 /* done drawing both eyes, the frame is ready to be presented */
 void goatvr_draw_done(void);

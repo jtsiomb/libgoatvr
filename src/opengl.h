@@ -28,6 +28,12 @@ namespace goatvr {
 
 bool init_opengl();
 
+#ifndef GL_VERSION_2_0
+typedef void (GLAPI *GLUseProgramFunc)(GLuint prog);
+
+extern GLUseProgramFunc glUseProgram;
+#endif	// !GL_VERSION_2_0
+
 #ifndef GL_VERSION_3_0
 /* ARB_framebuffer_object / EXT_framebuffer_object */
 #define GL_DEPTH_COMPONENT24	0x81a6

@@ -6,6 +6,10 @@ static glfunc_type load_glext(const char *name);
 
 namespace goatvr {
 
+#ifndef GL_VERSION_2_0
+GLUseProgramFunc glUseProgram;
+#endif
+
 #ifndef GL_VERSION_3_0
 GLGenFramebuffersFunc glGenFramebuffers;
 GLDeleteFramebuffersFunc glDeleteFramebuffers;
@@ -21,6 +25,10 @@ GLCheckFramebufferStatusFunc glCheckFramebufferStatus;
 
 bool init_opengl()
 {
+#ifndef GL_VERSION_2_0
+	glUseProgram = (GLUseProgramFunc)load_glext("glUseProgram");
+#endif	// !GL_VERSION_2_0
+
 #ifndef GL_VERSION_3_0
 	glGenFramebuffers = (GLGenFramebuffersFunc)load_glext("glGenFramebuffersEXT");
 	glDeleteFramebuffers = (GLDeleteFramebuffersFunc)load_glext("glDeleteFramebuffersEXT");

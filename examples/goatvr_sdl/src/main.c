@@ -70,6 +70,9 @@ static int init(void)
 	glGetError();	// ignore error if we don't have the extension
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_NORMALIZE);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
 
 	chess_tex = gen_chess_tex(1.0, 0.7, 0.4, 0.4, 0.7, 1.0);
 
@@ -99,30 +102,22 @@ static void cleanup(void)
 static void draw(void)
 {
 	int i;
+	unsigned int tex = goatvr_get_fb_texture();
 
-	assert(glGetError() == GL_NO_ERROR);
+	goatvr_draw_start();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	assert(glGetError() == GL_NO_ERROR);
 
 	for(i=0; i<2; i++) {
 		goatvr_draw_eye(i);
-
-		assert(glGetError() == GL_NO_ERROR);
 
 		glMatrixMode(GL_PROJECTION);
 		glLoadMatrixf(goatvr_projection_matrix(i, 0.5, 500.0));
 		glMatrixMode(GL_MODELVIEW);
 		glLoadMatrixf(goatvr_view_matrix(i));
 
-		assert(glGetError() == GL_NO_ERROR);
 		draw_scene();
-		assert(glGetError() == GL_NO_ERROR);
 	}
 	goatvr_draw_done();
-
-	/* goatvr calls above change the viewport */
-	glViewport(0, 0, width, height);
-	/* TODO: draw on regular window */
 
 	SDL_GL_SwapWindow(win);
 	assert(glGetError() == GL_NO_ERROR);
@@ -146,8 +141,6 @@ static void draw_scene()
 		glLightfv(GL_LIGHT0 + i, GL_DIFFUSE, lcol[i]);
 	}
 
-	assert(glGetError() == GL_NO_ERROR);
-
 	glMatrixMode(GL_MODELVIEW);
 
 	glPushMatrix();
@@ -158,8 +151,6 @@ static void draw_scene()
 	draw_box(30, 20, 30, -1.0);
 	glDisable(GL_TEXTURE_2D);
 	glPopMatrix();
-
-	assert(glGetError() == GL_NO_ERROR);
 
 	for(int i=0; i<4; i++) {
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, grey);
@@ -183,16 +174,12 @@ static void draw_scene()
 		glPopMatrix();
 	}
 
-	assert(glGetError() == GL_NO_ERROR);
-
 	col[0] = 1;
 	col[1] = 1;
 	col[2] = 0.4;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
 	draw_box(0.05, 1.2, 6, 1.0);
 	draw_box(6, 1.2, 0.05, 1.0);
-
-	assert(glGetError() == GL_NO_ERROR);
 }
 
 static void draw_box(float xsz, float ysz, float zsz, float norm_sign)

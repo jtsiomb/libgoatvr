@@ -67,6 +67,10 @@ void Module::stop()
 {
 }
 
+void Module::set_origin_mode(goatvr_origin_mode mode)
+{
+}
+
 void Module::update()
 {
 }
@@ -89,6 +93,10 @@ void Module::draw_eye(int eye)
 }
 
 void Module::draw_done()
+{
+}
+
+void Module::draw_mirror()
 {
 }
 

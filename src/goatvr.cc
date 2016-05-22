@@ -8,7 +8,7 @@ namespace goatvr {
 void register_modules();	// auto-generated function during build
 }
 
-extern "C" {
+static goatvr_origin_mode origin_mode = GOATVR_FLOOR;
 
 static bool in_vr;
 // user-supplied framebuffer properties
@@ -18,6 +18,8 @@ static float cur_fbscale = 1.0f;
 static unsigned int fbo;
 static unsigned int zbuf;
 static int fbo_width, fbo_height;
+
+extern "C" {
 
 int goatvr_init()
 {
@@ -88,6 +90,9 @@ void goatvr_startvr()
 
 	start();
 	in_vr = true;
+
+	// make sure any changes done while not in VR make it through to the module
+	render_module->set_origin_mode(origin_mode);
 }
 
 void goatvr_stopvr()
@@ -98,6 +103,19 @@ void goatvr_stopvr()
 int goatvr_invr()
 {
 	return in_vr ? 1 : 0;
+}
+
+void goatvr_set_origin_mode(goatvr_origin_mode mode)
+{
+	if(render_module) {
+		render_module->set_origin_mode(mode);
+	}
+	origin_mode = mode;
+}
+
+goatvr_origin_mode goatvr_get_origin_mode()
+{
+	return origin_mode;
 }
 
 // ---- rendering ----
@@ -278,25 +296,21 @@ float *goatvr_projection_matrix(int eye, float znear, float zfar)
 	return ident_mat;
 }
 
-static bool in_drawing;
+void goatvr_draw_start(void)
+{
+	update();
+
+	/* NOTE: we must call goatvr_get_fbo instead of accessing fbo directly here
+	 * to make sure we have an up to date render texture and framebuffer object
+	 */
+	glBindFramebuffer(GL_FRAMEBUFFER, goatvr_get_fbo());
+
+	render_module->draw_start();
+}
 
 void goatvr_draw_eye(int eye)
 {
 	if(!render_module) return;
-
-	if(!in_drawing) {
-		update();
-
-		/* NOTE: we must call goatvr_get_fbo instead of accessing fbo directly here
-		 * to make sure we have an up to date render texture and framebuffer object
-		 */
-		glBindFramebuffer(GL_FRAMEBUFFER, goatvr_get_fbo());
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		CHECK_GLERROR;
-
-		render_module->draw_start();
-		in_drawing = true;
-	}
 
 	goatvr_viewport(eye);
 	render_module->draw_eye(eye);
@@ -304,13 +318,12 @@ void goatvr_draw_eye(int eye)
 
 void goatvr_draw_done()
 {
-	if(!in_drawing || !render_module) return;
-
-	in_drawing = false;
+	if(!render_module) return;
 
 	render_module->draw_done();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	render_module->draw_mirror();
 }
 
 }	// extern "C"

@@ -106,6 +106,17 @@ void ModuleOculus::stop()
 	ovr = 0;
 }
 
+void ModuleOculus::set_origin_mode(goatvr_origin_mode mode)
+{
+	if(!ovr) return;	// not started
+
+	if(mode == GOATVR_FLOOR) {
+		ovr_SetTrackingOriginType(ovr, ovrTrackingOrigin_FloorLevel);
+	} else {
+		ovr_SetTrackingOriginType(ovr, ovrTrackingOrigin_EyeLevel);
+	}
+}
+
 void ModuleOculus::update()
 {
 	ovrVector3f eye_offs[2] = { rdesc[0].HmdToEyeOffset, rdesc[1].HmdToEyeOffset };
@@ -113,6 +124,23 @@ void ModuleOculus::update()
 	double tm = ovr_GetPredictedDisplayTime(ovr, 0);
 	ovrTrackingState tstate = ovr_GetTrackingState(ovr, tm, ovrTrue);
 	ovr_CalcEyePoses(tstate.HeadPose.ThePose, eye_offs, ovr_layer.RenderPose);
+
+	for(int i=0; i<2; i++) {
+		ovrVector3f pos = ovr_layer.RenderPose[i].Position;
+		ovrQuatf rot = ovr_layer.RenderPose[i].Orientation;
+
+		eye_pos[i] = Vec3(pos.x, pos.y, pos.z);
+		eye_rot[i] = Quat(rot.x, rot.y, rot.z, rot.w);
+
+		Mat4 rmat = eye_rot[i].calc_matrix();
+		Mat4 tmat;
+		tmat.translation(eye_pos[i]);
+		eye_xform[i] = rmat * tmat;
+
+		rmat.transpose();
+		tmat.translation(-eye_pos[i]);
+		eye_inv_xform[i] = tmat * rmat;
+	}
 }
 
 void ModuleOculus::set_fbsize(int width, int height, float fbscale)
@@ -133,7 +161,6 @@ RenderTexture *ModuleOculus::get_render_texture()
 
 		rtex.eye_width[i] = texsz[i].w;
 		rtex.eye_height[i] = texsz[i].h;
-
 		rtex.eye_yoffs[i] = 0;
 	}
 	rtex.eye_xoffs[0] = 0;
@@ -178,18 +205,24 @@ RenderTexture *ModuleOculus::get_render_texture()
 	ovr_GetTextureSwapChainBufferGL(ovr, ovr_rtex, -1, &rtex.tex);
 
 	// prepare the layer
-	// TODO: this is certainly incorrect, cross-check with old code
 	ovr_layer.Header.Type = ovrLayerType_EyeFov;
-	ovr_layer.Header.Flags = 0;
+	ovr_layer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
 	for(int i=0; i<2; i++) {
 		ovr_layer.ColorTexture[i] = ovr_rtex;
 		ovr_layer.Fov[i] = rdesc[i].Fov;
-		ovr_layer.Viewport[i].Pos = {rtex.eye_xoffs[i], rtex.eye_yoffs[i]};
+		//ovr_layer.Viewport[i].Pos = {rtex.eye_xoffs[i], rtex.eye_yoffs[i]};
+		ovr_layer.Viewport[i].Pos = {rtex.eye_xoffs[i], texheight - fbheight};
 		ovr_layer.Viewport[i].Size = {rtex.eye_width[i], rtex.eye_height[i]};
 	}
 
-	// create the mirror texture if necessary (TODO)
-#if 0
+	// create the mirror texture if necessary
+	if(win_width == -1) {
+		int vp[4];
+		glGetIntegerv(GL_VIEWPORT, vp);
+		win_width = vp[2] + vp[0];
+		win_height = vp[3] + vp[1];
+	}
+
 	int new_mtex_width = next_pow2(win_width);
 	int new_mtex_height = next_pow2(win_height);
 	if(!ovr_mirtex || mirtex_width != new_mtex_width || mirtex_height != new_mtex_height) {
@@ -204,8 +237,13 @@ RenderTexture *ModuleOculus::get_render_texture()
 		}
 		mirtex_width = new_mtex_width;
 		mirtex_height = new_mtex_height;
+
+		ovr_GetMirrorTextureBufferGL(ovr, ovr_mirtex, &mirtex);
+
+		glBindTexture(GL_TEXTURE_2D, mirtex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
-#endif
 	
 	return &rtex;
 }
@@ -235,9 +273,45 @@ void ModuleOculus::draw_done()
 	}
 }
 
+void ModuleOculus::draw_mirror()
+{
+	glViewport(0, 0, win_width, win_height);
+
+	glPushAttrib(GL_ENABLE_BIT);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_STENCIL_TEST);
+	glDisable(GL_CULL_FACE);
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, mirtex);
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 1); glVertex2f(-1, -1);
+	glTexCoord2f(1, 1); glVertex2f(1, -1);
+	glTexCoord2f(1, 0); glVertex2f(1, 1);
+	glTexCoord2f(0, 0); glVertex2f(-1, 1);
+	glEnd();
+
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+
+	glPopAttrib();
+}
+
 Mat4 ModuleOculus::get_view_matrix(int eye)
 {
-	return Mat4::identity;
+	//return eye_inv_xform[eye];
+	return inverse(eye_xform[eye]);
 }
 
 Mat4 ModuleOculus::get_proj_matrix(int eye, float znear, float zfar)

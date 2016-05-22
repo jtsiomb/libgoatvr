@@ -2,6 +2,7 @@
 #define MODULE_H_
 
 #include <gmath/gmath.h>
+#include "goatvr_impl.h"
 #include "rtex.h"
 
 // use this in mod_whatever.cc to register each module: REG_MODULE(whatever, ModuleWhatever)
@@ -50,6 +51,8 @@ public:
 	virtual void start();
 	virtual void stop();
 
+	virtual void set_origin_mode(goatvr_origin_mode mode);
+
 	virtual void update();
 
 	// rendering ops are only valid on rendering modules
@@ -59,6 +62,7 @@ public:
 	virtual void draw_start();
 	virtual void draw_eye(int eye);
 	virtual void draw_done();
+	virtual void draw_mirror();
 
 	virtual Mat4 get_view_matrix(int eye);
 	virtual Mat4 get_proj_matrix(int eye, float znear, float zfar);
