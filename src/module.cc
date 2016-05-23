@@ -71,6 +71,10 @@ void Module::set_origin_mode(goatvr_origin_mode mode)
 {
 }
 
+void Module::recenter()
+{
+}
+
 void Module::update()
 {
 }

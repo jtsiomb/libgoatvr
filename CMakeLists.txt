@@ -6,9 +6,9 @@ include(GNUInstallDirs)
 find_package(OpenGL)
 
 option(mod_oculus "Build Oculus (libovr) module" ON)
+option(mod_openvr "Build Valve OpenVR module" ON)
 # TODO
 #option(mod_oculus_old "Build old Oculus SDK 0.5 module" OFF)
-#option(mod_openvr "Build Valve OpenVR module" OFF)
 #option(mod_spaceball "Build spaceball module" OFF)
 #option(mod_glstereo "Build stereoscopic OpenGL module" ON)
 
@@ -30,6 +30,10 @@ list(APPEND src reg_modules.cc)
 if(mod_oculus)
 	add_definitions(-DUSE_MOD_OCULUS)
 	list(APPEND mod_libs LibOVR)
+endif()
+if(mod_openvr)
+	add_definitions(-DUSE_MOD_OPENVR)
+	list(APPEND mod_libs openvr_api)
 endif()
 
 add_library(goatvr SHARED ${src} ${hdr} ${pubhdr})

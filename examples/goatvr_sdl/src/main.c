@@ -273,6 +273,21 @@ static void handle_key(int key, int press)
 		case SDLK_ESCAPE:
 			done = 1;
 			break;
+
+		case ' ':
+			printf("recenter\n");
+			goatvr_recenter();
+			break;
+
+		case '`':
+			if(goatvr_get_origin_mode() == GOATVR_FLOOR) {
+				goatvr_set_origin_mode(GOATVR_HEAD);
+				printf("switching to head origin\n");
+			} else {
+				goatvr_set_origin_mode(GOATVR_FLOOR);
+				printf("switching to floor origin\n");
+			}
+			break;
 		}
 	}
 }

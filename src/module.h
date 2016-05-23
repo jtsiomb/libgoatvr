@@ -52,6 +52,7 @@ public:
 	virtual void stop();
 
 	virtual void set_origin_mode(goatvr_origin_mode mode);
+	virtual void recenter();
 
 	virtual void update();
 

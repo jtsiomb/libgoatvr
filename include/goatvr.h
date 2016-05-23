@@ -48,6 +48,8 @@ int goatvr_invr(void);		/* are we in VR? */
 void goatvr_set_origin_mode(enum goatvr_origin_mode origin);
 enum goatvr_origin_mode goatvr_get_origin_mode(void);
 
+void goatvr_recenter(void);
+
 /* ---- rendering ---- */
 void goatvr_set_fb_size(int width, int height, float scale);
 float goatvr_get_fb_scale(void);

@@ -1,6 +1,11 @@
+#include <stdlib.h>
 #include "opengl.h"
 #include "goatvr_impl.h"
 #include "modman.h"
+
+#ifdef _MSC_VER
+#define strcasecmp	stricmp
+#endif
 
 using namespace goatvr;
 
@@ -34,6 +39,9 @@ int goatvr_init()
 
 void goatvr_shutdown()
 {
+	goatvr_stopvr();
+	destroy_modules();
+
 	if(fbo) {
 		glDeleteFramebuffers(1, &fbo);
 		glDeleteRenderbuffers(1, &zbuf);
@@ -45,6 +53,11 @@ void goatvr_detect()
 	printf("goatvr: module detection running for %d total modules ...\n", get_num_modules());
 	detect();
 
+	char *rmod_env = getenv("GOATVR_MODULE");
+	if(rmod_env) {
+		printf("GOATVR_MODULE is set, looking for render module %s to activate.\n", rmod_env);
+	}
+
 	Module *rmod = 0;
 	int max_prio = -1;
 
@@ -54,12 +67,22 @@ void goatvr_detect()
 		if(m->usable()) {
 			printf("  %s", m->get_name());
 			if(m->get_type() == MODULE_RENDERING) {
-				printf(" (rendering module)\n");
 				int p = m->get_priority();
-				if(p > max_prio) {
-					rmod = m;
-					max_prio = p;
+				printf(" (render module, priority: %d)\n", p);
+
+				if(rmod_env) {
+					// user asked for a specific module
+					if(strcasecmp(m->get_name(), rmod_env) == 0) {
+						rmod = m;
+					}
+				} else {
+					// otherwise go by priority
+					if(p > max_prio) {
+						rmod = m;
+						max_prio = p;
+					}
 				}
+
 			} else {
 				putchar('\n');
 				activate(m);	// activate all usable non-rendering modules
@@ -74,6 +97,7 @@ void goatvr_detect()
 		} else {
 			// activate the highest priority render module
 			activate(rmod);
+			printf("activating rendering module: %s\n", rmod->get_name());
 		}
 	}
 }
@@ -116,6 +140,13 @@ void goatvr_set_origin_mode(goatvr_origin_mode mode)
 goatvr_origin_mode goatvr_get_origin_mode()
 {
 	return origin_mode;
+}
+
+void goatvr_recenter()
+{
+	if(render_module) {
+		render_module->recenter();
+	}
 }
 
 // ---- rendering ----

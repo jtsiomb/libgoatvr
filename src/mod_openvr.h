@@ -1,37 +1,34 @@
-#ifndef MOD_OCULUS_H_
-#define MOD_OCULUS_H_
+#ifndef MOD_OPENVR_H_
+#define MOD_OPENVR_H_
 
-#include <OVR_CAPI.h>
-#include <OVR_CAPI_GL.h>
 #include <gmath/gmath.h>
+#include <openvr.h>
 #include "module.h"
+#include "rtex.h"
 
 namespace goatvr {
 
-class ModuleOculus : public Module {
+class ModuleOpenVR : public Module {
 protected:
-	RenderTexture rtex;
-	ovrSession ovr;
-	ovrHmdDesc hmd;
-	ovrEyeRenderDesc rdesc[2];
-	ovrGraphicsLuid ovr_luid;
-	ovrTextureSwapChainData *ovr_rtex;
-	ovrLayerEyeFov ovr_layer;
+	int def_fbwidth, def_fbheight;	// recommended by OpenVR fb size
 
-	double input_time;
-	Vec3 eye_pos[2];
-	Quat eye_rot[2];
+	RenderTexture rtex;
+	vr::Texture_t vr_tex;
+	vr::VRTextureBounds_t vr_tex_bounds[2];
+
+	vr::IVRSystem *vr;
+	vr::IVRCompositor *vrcomp;
+	vr::TrackedDevicePose_t vr_pose[vr::k_unMaxTrackedDeviceCount];
+	Mat4 xform[vr::k_unMaxTrackedDeviceCount];
+
+	Mat4 eye_to_hmd_xform[2];
 	Mat4 eye_xform[2], eye_inv_xform[2];
 
-	ovrMirrorTextureData *ovr_mirtex;
-	unsigned int mirtex;
-	int mirtex_width, mirtex_height;
-	int win_width, win_height;
-
+	int win_width, win_height;	// for the mirror texture
 
 public:
-	ModuleOculus();
-	~ModuleOculus();
+	ModuleOpenVR();
+	~ModuleOpenVR();
 
 	bool init();
 	void destroy();
@@ -61,4 +58,4 @@ public:
 
 }	// namespace goatvr
 
-#endif	// MOD_OCULUS_H_
+#endif	// MOD_OPENVR_H_

@@ -8,6 +8,8 @@ namespace goatvr {
 
 extern Module *render_module;
 
+void destroy_modules();
+
 void add_module(Module *m);
 int get_num_modules();
 Module *get_module(int idx);

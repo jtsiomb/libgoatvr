@@ -24,6 +24,17 @@ static std::vector<Module*> modules;
 static std::set<Module*> active;
 static int num_avail;
 
+void destroy_modules()
+{
+	for(size_t i=0; i<modules.size(); i++) {
+		delete modules[i];
+	}
+	modules.clear();
+	active.clear();
+	num_avail = 0;
+	render_module = 0;
+}
+
 void add_module(Module *m)
 {
 	if(std::find(modules.begin(), modules.end(), m) == modules.end()) {

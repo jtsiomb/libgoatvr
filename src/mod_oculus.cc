@@ -90,7 +90,7 @@ void ModuleOculus::start()
 		return;
 	}
 
-	// force creating the render target when start is called
+	// force creation of the render target when start is called
 	get_render_texture();
 }
 
@@ -114,6 +114,13 @@ void ModuleOculus::set_origin_mode(goatvr_origin_mode mode)
 		ovr_SetTrackingOriginType(ovr, ovrTrackingOrigin_FloorLevel);
 	} else {
 		ovr_SetTrackingOriginType(ovr, ovrTrackingOrigin_EyeLevel);
+	}
+}
+
+void ModuleOculus::recenter()
+{
+	if(ovr) {
+		ovr_RecenterTrackingOrigin(ovr);
 	}
 }
 
@@ -153,6 +160,7 @@ void ModuleOculus::set_fbsize(int width, int height, float fbscale)
 
 RenderTexture *ModuleOculus::get_render_texture()
 {
+	// TODO cache some of these values and update them only when necessary
 	ovrSizei texsz[2];
 	for(int i=0; i<2; i++) {
 		ovrEyeType eye = (ovrEyeType)i;
@@ -164,7 +172,7 @@ RenderTexture *ModuleOculus::get_render_texture()
 		rtex.eye_yoffs[i] = 0;
 	}
 	rtex.eye_xoffs[0] = 0;
-	rtex.eye_xoffs[1] = rtex.eye_xoffs[0] + rtex.eye_width[0];
+	rtex.eye_xoffs[1] = rtex.eye_width[0];
 
 	int fbwidth = texsz[0].w + texsz[1].w;
 	int fbheight = std::max(texsz[0].h, texsz[1].h);
@@ -310,8 +318,7 @@ void ModuleOculus::draw_mirror()
 
 Mat4 ModuleOculus::get_view_matrix(int eye)
 {
-	//return eye_inv_xform[eye];
-	return inverse(eye_xform[eye]);
+	return eye_inv_xform[eye];
 }
 
 Mat4 ModuleOculus::get_proj_matrix(int eye, float znear, float zfar)
