@@ -64,8 +64,6 @@ quit:
 
 static int init(void)
 {
-	glClearColor(1, 0, 0, 1);
-
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glGetError();	// ignore error if we don't have the extension
 	glEnable(GL_DEPTH_TEST);
@@ -105,6 +103,7 @@ static void draw(void)
 	unsigned int tex = goatvr_get_fb_texture();
 
 	goatvr_draw_start();
+	glClearColor(1, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	for(i=0; i<2; i++) {
@@ -117,6 +116,7 @@ static void draw(void)
 
 		draw_scene();
 	}
+	glClearColor(1, 0, 1, 1);
 	goatvr_draw_done();
 
 	SDL_GL_SwapWindow(win);
@@ -152,6 +152,7 @@ static void draw_scene()
 	glDisable(GL_TEXTURE_2D);
 	glPopMatrix();
 
+	return;
 	for(int i=0; i<4; i++) {
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, grey);
 		glPushMatrix();
@@ -241,6 +242,8 @@ static void reshape(int x, int y)
 {
 	width = x;
 	height = y;
+
+	goatvr_set_fb_size(x, y, 1.0);
 }
 
 static void handle_event(SDL_Event *ev)

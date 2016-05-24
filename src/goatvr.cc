@@ -351,10 +351,10 @@ void goatvr_draw_done()
 {
 	if(!render_module) return;
 
-	render_module->draw_done();
-
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	render_module->draw_mirror();
+
+	render_module->draw_done();
 }
 
 }	// extern "C"

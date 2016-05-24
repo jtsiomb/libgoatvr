@@ -134,6 +134,9 @@ void ModuleOpenVR::recenter()
 
 void ModuleOpenVR::update()
 {
+	// XXX is this going to block?
+	vrcomp->WaitGetPoses(vr_pose, k_unMaxTrackedDeviceCount, 0, 0);
+
 	// process OpenVR events (TODO)
 	VREvent_t ev;
 	while(vr->PollNextEvent(&ev, sizeof ev)) {
@@ -154,9 +157,6 @@ void ModuleOpenVR::update()
 			break;
 		}
 	}
-
-	// XXX is this going to block?
-	vrcomp->WaitGetPoses(vr_pose, k_unMaxTrackedDeviceCount, 0, 0);
 
 	for(int i=0; i<k_unMaxTrackedDeviceCount; i++) {
 		if(vr_pose[i].bPoseIsValid) {
@@ -249,6 +249,8 @@ void ModuleOpenVR::draw_done()
 	vrcomp->Submit(Eye_Left, &vr_tex, vr_tex_bounds);
 	vrcomp->Submit(Eye_Right, &vr_tex, vr_tex_bounds + 1);
 
+	glFlush();
+
 	/* this is supposed to tell the compositor to get on with showing the frame without waiting for
 	 * the next WaitGetPoses call.
 	 */
@@ -257,6 +259,8 @@ void ModuleOpenVR::draw_done()
 
 void ModuleOpenVR::draw_mirror()
 {
+	return;	// XXX it looks like maybe the mirror window drawing fucks this up ... no idea why
+	glClear(GL_COLOR_BUFFER_BIT);
 	glViewport(0, 0, win_width, win_height);
 
 	glPushAttrib(GL_ENABLE_BIT);
