@@ -158,7 +158,7 @@ void ModuleOpenVR::update()
 		}
 	}
 
-	for(int i=0; i<k_unMaxTrackedDeviceCount; i++) {
+	for(int i=0; i<(int)k_unMaxTrackedDeviceCount; i++) {
 		if(vr_pose[i].bPoseIsValid) {
 			xform[i] = openvr_matrix(vr_pose[i].mDeviceToAbsoluteTracking);
 		}
