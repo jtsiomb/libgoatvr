@@ -13,7 +13,9 @@ protected:
 	RenderTexture rtex;
 	ovrHmd hmd;
 	ovrEyeRenderDesc ovr_rdesc[2];
+	ovrGLTexture ovr_gltex[2];
 	ovrGLConfig ovr_glcfg;
+	ovrPosef ovr_poses[2];
 
 	goatvr_origin_mode origin_mode;
 
@@ -46,6 +48,7 @@ public:
 	void set_fbsize(int width, int height, float fbscale);
 	RenderTexture *get_render_texture();
 
+	void draw_start();
 	void draw_done();
 
 	Mat4 get_view_matrix(int eye);

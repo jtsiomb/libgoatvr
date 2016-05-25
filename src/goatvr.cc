@@ -329,14 +329,14 @@ float *goatvr_projection_matrix(int eye, float znear, float zfar)
 
 void goatvr_draw_start(void)
 {
-	update();
-
 	/* NOTE: we must call goatvr_get_fbo instead of accessing fbo directly here
 	 * to make sure we have an up to date render texture and framebuffer object
 	 */
 	glBindFramebuffer(GL_FRAMEBUFFER, goatvr_get_fbo());
 
 	render_module->draw_start();
+
+	update();	// this needs to be called *after* draw_start for oculus_old
 }
 
 void goatvr_draw_eye(int eye)

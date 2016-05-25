@@ -73,7 +73,7 @@ if(mod_openvr)
 endif()
 if(mod_oculus_old)
 	add_definitions(-DUSE_MOD_OCULUS_OLD)
-	list(APPEND mod_libs OVR)
+	list(APPEND mod_libs OVR dl)
 endif()
 
 target_link_libraries(goatvr ${gmath_lib} ${mod_libs} ${OPENGL_LIBRARIES})

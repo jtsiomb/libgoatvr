@@ -7,10 +7,22 @@
 #include "opengl.h"
 #include "mod_oculus_old.h"
 #include "goatvr_impl.h"
+#include "wmutils.h"
+
+#ifdef OVR_OS_LINUX
+#include <GL/glx.h>
+#endif
+#ifdef OVR_OS_WIN32
+#include <windows.h>
+#endif
 
 REG_MODULE(oculus_old, ModuleOculusOld)
 
 using namespace goatvr;
+
+static Mat4 ovr_matrix(const ovrMatrix4f &mat);
+
+
 
 ModuleOculusOld::ModuleOculusOld()
 {
@@ -18,6 +30,8 @@ ModuleOculusOld::ModuleOculusOld()
 
 	memset(&rtex, 0, sizeof rtex);
 	rtex.fbscale = 1.0f;
+
+	win_width = win_height = -1;
 }
 
 ModuleOculusOld::~ModuleOculusOld()
@@ -31,7 +45,7 @@ bool ModuleOculusOld::init()
 		return false;
 	}
 
-	if(ovr_Initialize(0) != 0) {
+	if(!ovr_Initialize(0)) {
 		print_error("failed to initialize libovr\n");
 		return false;
 	}
@@ -54,7 +68,7 @@ ModuleType ModuleOculusOld::get_type() const
 
 const char *ModuleOculusOld::get_name() const
 {
-	return "oculus";
+	return "oculus_old";
 }
 
 bool ModuleOculusOld::detect()
@@ -88,22 +102,35 @@ void ModuleOculusOld::start()
 		win_height = vp[3];
 	}
 
+
+	// *attempt* to go fullscreen on the rift
+	hmd_fullscreen(hmd->WindowsPos.x, hmd->WindowsPos.y);
+
+	// enable position and rotation tracking
+	ovrHmd_ConfigureTracking(hmd, ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection
+			| ovrTrackingCap_Position, 0);
+
+	// fill the ovrGLConfig structure
 	memset(&ovr_glcfg, 0, sizeof ovr_glcfg);
 	ovr_glcfg.OGL.Header.API = ovrRenderAPI_OpenGL;
-	ovr_glcfg.OGL.Header.BackBufferSize.w = win_width;
-	ovr_glcfg.OGL.Header.BackBufferSize.h = win_height;
+	ovr_glcfg.OGL.Header.BackBufferSize.h = win_width;
+	ovr_glcfg.OGL.Header.BackBufferSize.w = win_height;
 	ovr_glcfg.OGL.Header.Multisample = 1;
-
 #ifdef OVR_OS_WIN32
 	ovr_glcfg.OGL.Window = GetActiveWindow();
 	ovr_glcfg.OGL.DC = wglGetCurrentDC();
-#elif defined(OVR_OS_LINUX)
+	if(!(hmd->HmdCaps & ovrHmdCap_ExtendDesktop)) {
+		ovrHmd_AttachToWindow(hmd, glcfg.OGL.Window, 0, 0);
+	}
+#endif
+#ifdef OVR_OS_LINUX
 	ovr_glcfg.OGL.Disp = glXGetCurrentDisplay();
 #endif
 
+	// enable low persistence and dynamic prediction
 	unsigned int hmd_caps = ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction;
 	ovrHmd_SetEnabledCaps(hmd, hmd_caps);
-
+	// configure SDK-rendering and enable display overdrive and timewarp
 	unsigned int distort_caps = ovrDistortionCap_TimeWarp | ovrDistortionCap_Overdrive;
 #ifdef OVR_OS_LINUX
 	distort_caps |= ovrDistortionCap_LinuxDevFullscreen;
@@ -130,7 +157,7 @@ void ModuleOculusOld::set_origin_mode(goatvr_origin_mode mode)
 void ModuleOculusOld::recenter()
 {
 	if(hmd) {
-		ovr_RecenterPose(hmd);
+		ovrHmd_RecenterPose(hmd);
 	}
 }
 
@@ -141,13 +168,12 @@ void ModuleOculusOld::update()
 		ovr_rdesc[1].HmdToEyeViewOffset
 	};
 
-	ovrPosef poses[2];
 	ovrTrackingState tstate;
-	ovrHmd_GetEyePoses(hmd, 0, eye_offs, poses, &tstate);
+	ovrHmd_GetEyePoses(hmd, 0, eye_offs, ovr_poses, &tstate);
 
 	for(int i=0; i<2; i++) {
-		ovrVector3f pos = poses[i].Position;
-		ovrQuatf rot = poses[i].Orientation;
+		ovrVector3f pos = ovr_poses[i].Position;
+		ovrQuatf rot = ovr_poses[i].Orientation;
 
 		eye_pos[i] = Vec3(pos.x, pos.y, pos.z);
 		eye_rot[i] = Quat(rot.x, rot.y, rot.z, rot.w);
@@ -173,16 +199,12 @@ void ModuleOculusOld::set_fbsize(int width, int height, float fbscale)
 	win_height = height;
 }
 
-// TODO continue from here...
-
 RenderTexture *ModuleOculusOld::get_render_texture()
 {
-	// TODO cache some of these values and update them only when necessary
 	ovrSizei texsz[2];
 	for(int i=0; i<2; i++) {
 		ovrEyeType eye = (ovrEyeType)i;
-		texsz[i] = ovr_GetFovTextureSize(ovr, eye, hmd.DefaultEyeFov[i], rtex.fbscale);
-		rdesc[i] = ovr_GetRenderDesc(ovr, eye, hmd.DefaultEyeFov[i]);
+		texsz[i] = ovrHmd_GetFovTextureSize(hmd, eye, hmd->DefaultEyeFov[i], rtex.fbscale);
 
 		rtex.eye_width[i] = texsz[i].w;
 		rtex.eye_height[i] = texsz[i].h;
@@ -197,27 +219,19 @@ RenderTexture *ModuleOculusOld::get_render_texture()
 	int texwidth = next_pow2(fbwidth);
 	int texheight = next_pow2(fbheight);
 
+	if(!rtex.tex) {
+		glGenTextures(1, &rtex.tex);
+		glBindTexture(GL_TEXTURE_2D, rtex.tex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		rtex.tex_width = -1; // invalidate width to force a tex rebuild
+	}
+
 	// recreate the texture if necessary
 	if(rtex.tex_width != texwidth || rtex.tex_height != texheight) {
-		if(ovr_rtex) {	// we have a previous texture
-			ovr_DestroyTextureSwapChain(ovr, ovr_rtex);
-		}
-
-		ovrTextureSwapChainDesc desc;
-		memset(&desc, 0, sizeof desc);
-		desc.Type = ovrTexture_2D;
-		desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-		desc.ArraySize = 1;	// ?
-		desc.Width = texwidth;
-		desc.Height = texheight;
-		desc.MipLevels = 1;
-		desc.SampleCount = 1;
-
-		if(ovr_CreateTextureSwapChainGL(ovr, &desc, &ovr_rtex) != 0) {
-			print_error("failed to create texture swap chain (%dx%d)\n", texwidth, texheight);
-			ovr_rtex = 0;
-			return 0;
-		}
+		print_info("creating %dx%d texture for %dx%d framebuffer\n", texwidth, texheight, fbwidth, fbheight);
+		glBindTexture(GL_TEXTURE_2D, rtex.tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texwidth, texheight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 
 		rtex.tex_width = texwidth;
 		rtex.tex_height = texheight;
@@ -226,111 +240,27 @@ RenderTexture *ModuleOculusOld::get_render_texture()
 	rtex.width = fbwidth;
 	rtex.height = fbheight;
 
-	// NOTE: index -1 means current index
-	ovr_GetTextureSwapChainBufferGL(ovr, ovr_rtex, -1, &rtex.tex);
-
-	// prepare the layer
-	ovr_layer.Header.Type = ovrLayerType_EyeFov;
-	ovr_layer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
+	// prepare the ovrGLTexture
 	for(int i=0; i<2; i++) {
-		ovr_layer.ColorTexture[i] = ovr_rtex;
-		ovr_layer.Fov[i] = rdesc[i].Fov;
-		//ovr_layer.Viewport[i].Pos = {rtex.eye_xoffs[i], rtex.eye_yoffs[i]};
-		ovr_layer.Viewport[i].Pos = {rtex.eye_xoffs[i], texheight - fbheight};
-		ovr_layer.Viewport[i].Size = {rtex.eye_width[i], rtex.eye_height[i]};
+		ovr_gltex[i].OGL.Header.API = ovrRenderAPI_OpenGL;
+		ovr_gltex[i].OGL.Header.TextureSize.w = texwidth;
+		ovr_gltex[i].OGL.Header.TextureSize.h = texheight;
+		ovr_gltex[i].OGL.Header.RenderViewport.Pos.x = i == 0 ? 0 : fbwidth / 2;
+		ovr_gltex[i].OGL.Header.RenderViewport.Pos.y = 0;
+		ovr_gltex[i].OGL.Header.RenderViewport.Size = {rtex.eye_width[i], rtex.eye_height[i]};
+		ovr_gltex[i].OGL.TexId = rtex.tex;
 	}
-
-	// create the mirror texture if necessary
-	if(win_width == -1) {
-		int vp[4];
-		glGetIntegerv(GL_VIEWPORT, vp);
-		win_width = vp[2] + vp[0];
-		win_height = vp[3] + vp[1];
-	}
-
-	int new_mtex_width = next_pow2(win_width);
-	int new_mtex_height = next_pow2(win_height);
-	if(!ovr_mirtex || mirtex_width != new_mtex_width || mirtex_height != new_mtex_height) {
-		ovrMirrorTextureDesc desc;
-		desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-		desc.Width = new_mtex_width;
-		desc.Height = new_mtex_height;
-
-		if(ovr_CreateMirrorTextureGL(ovr, &desc, &ovr_mirtex) != 0) {
-			print_error("failed to create mirror texture (%dx%d)\n", new_mtex_width, new_mtex_height);
-			ovr_mirtex = 0;
-		}
-		mirtex_width = new_mtex_width;
-		mirtex_height = new_mtex_height;
-
-		ovr_GetMirrorTextureBufferGL(ovr, ovr_mirtex, &mirtex);
-
-		glBindTexture(GL_TEXTURE_2D, mirtex);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	}
-	
 	return &rtex;
+}
+
+void ModuleOculusOld::draw_start()
+{
+	ovrHmd_BeginFrame(hmd, 0);
 }
 
 void ModuleOculusOld::draw_done()
 {
-	ovr_CommitTextureSwapChain(ovr, ovr_rtex);
-
-	ovrLayerHeader *layers = &ovr_layer.Header;
-	ovrResult res = ovr_SubmitFrame(ovr, 0, 0, &layers, 1);
-	switch(res) {
-	case ovrSuccess_NotVisible:
-		print_info("lost HMD ownership\n");
-		// TODO notify the app about this to throttle down
-		break;
-
-	case ovrError_DisplayLost:
-		print_error("display lost\n");
-		// TODO notify the app about this
-		stop();
-		break;
-
-	case ovrError_TextureSwapChainInvalid:
-		print_error("invalid swap chain!\n");
-		stop();
-		break;
-	}
-}
-
-void ModuleOculusOld::draw_mirror()
-{
-	glViewport(0, 0, win_width, win_height);
-
-	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_STENCIL_TEST);
-	glDisable(GL_CULL_FACE);
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, mirtex);
-
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-
-	glBegin(GL_QUADS);
-	glTexCoord2f(0, 1); glVertex2f(-1, -1);
-	glTexCoord2f(1, 1); glVertex2f(1, -1);
-	glTexCoord2f(1, 0); glVertex2f(1, 1);
-	glTexCoord2f(0, 0); glVertex2f(-1, 1);
-	glEnd();
-
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
-
-	glPopAttrib();
+	ovrHmd_EndFrame(hmd, ovr_poses, &ovr_gltex[0].Texture);
 }
 
 Mat4 ModuleOculusOld::get_view_matrix(int eye)
@@ -340,8 +270,16 @@ Mat4 ModuleOculusOld::get_view_matrix(int eye)
 
 Mat4 ModuleOculusOld::get_proj_matrix(int eye, float znear, float zfar)
 {
-	Mat4 m = *(Mat4*)&ovrMatrix4f_Projection(rdesc[eye].Fov, znear, zfar, ovrProjection_ClipRangeOpenGL);
-	return transpose(m);
+	return ovr_matrix(ovrMatrix4f_Projection(ovr_rdesc[eye].Fov, znear, zfar,
+			ovrProjection_RightHanded | ovrProjection_ClipRangeOpenGL));
+}
+
+static Mat4 ovr_matrix(const ovrMatrix4f &mat)
+{
+	return Mat4(mat.M[0][0], mat.M[1][0], mat.M[2][0], mat.M[3][0],
+			mat.M[0][1], mat.M[1][1], mat.M[2][1], mat.M[3][1],
+			mat.M[0][2], mat.M[1][2], mat.M[2][2], mat.M[3][2],
+			mat.M[0][3], mat.M[1][3], mat.M[2][3], mat.M[3][3]);
 }
 
 #else
