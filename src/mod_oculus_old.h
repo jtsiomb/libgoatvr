@@ -11,6 +11,7 @@ namespace goatvr {
 class ModuleOculusOld : public Module {
 protected:
 	RenderTexture rtex;
+	bool rtex_valid;
 	ovrHmd hmd;
 	ovrEyeRenderDesc ovr_rdesc[2];
 	ovrGLTexture ovr_gltex[2];

@@ -17,12 +17,10 @@ static VRTextureBounds_t openvr_tex_bounds(float umin, float vmin, float umax, f
 
 ModuleOpenVR::ModuleOpenVR()
 {
-	memset(&rtex, 0, sizeof rtex);
-	rtex.fbscale = 1.0f;
-
 	vr = 0;
 	vrcomp = 0;
 	win_width = win_height = -1;
+	rtex_valid = false;
 }
 
 ModuleOpenVR::~ModuleOpenVR()
@@ -114,6 +112,7 @@ void ModuleOpenVR::stop()
 		glDeleteTextures(1, &rtex.tex);
 		rtex.tex = 0;
 	}
+	rtex_valid = false;
 }
 
 void ModuleOpenVR::set_origin_mode(goatvr_origin_mode mode)
@@ -181,6 +180,9 @@ void ModuleOpenVR::update()
 
 void ModuleOpenVR::set_fbsize(int width, int height, float fbscale)
 {
+	if(fbscale != rtex.fbscale) {
+		rtex_valid = false;
+	}
 	rtex.fbscale = fbscale;
 	// this is only used for the mirror texture
 	win_width = width;
@@ -189,57 +191,39 @@ void ModuleOpenVR::set_fbsize(int width, int height, float fbscale)
 
 RenderTexture *ModuleOpenVR::get_render_texture()
 {
-	for(int i=0; i<2; i++) {
-		rtex.eye_width[i] = (int)((float)def_fbwidth * rtex.fbscale);
-		rtex.eye_height[i] = (int)((float)def_fbheight * rtex.fbscale);
-		rtex.eye_yoffs[i] = 0;
-	}
-	rtex.eye_xoffs[0] = 0;
-	rtex.eye_xoffs[1] = rtex.eye_width[0];
+	if(!rtex_valid) {
+		for(int i=0; i<2; i++) {
+			rtex.eye_width[i] = (int)((float)def_fbwidth * rtex.fbscale);
+			rtex.eye_height[i] = (int)((float)def_fbheight * rtex.fbscale);
+			rtex.eye_yoffs[i] = 0;
+		}
+		rtex.eye_xoffs[0] = 0;
+		rtex.eye_xoffs[1] = rtex.eye_width[0];
 
-	int fbwidth = rtex.eye_width[0] + rtex.eye_width[1];
-	int fbheight = std::max(rtex.eye_height[0], rtex.eye_height[1]);
+		int fbwidth = rtex.eye_width[0] + rtex.eye_width[1];
+		int fbheight = std::max(rtex.eye_height[0], rtex.eye_height[1]);
 
-	int texwidth = next_pow2(fbwidth);
-	int texheight = next_pow2(fbheight);
+		rtex.update(fbwidth, fbheight);
 
-	if(!rtex.tex) {
-		glGenTextures(1, &rtex.tex);
-		glBindTexture(GL_TEXTURE_2D, rtex.tex);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		rtex.tex_width = -1; // invalidate width to force a tex rebuild
-	}
+		// prepare the OpenVR texture and texture bounds structs
+		vr_tex.handle = (void*)rtex.tex;
+		vr_tex.eType = API_OpenGL;
+		vr_tex.eColorSpace = ColorSpace_Linear;
 
-	// recreate the texture if necessary
-	if(rtex.tex_width != texwidth || rtex.tex_height != texheight) {
-		print_info("creating %dx%d texture for %dx%d framebuffer\n", texwidth, texheight, fbwidth, fbheight);
-		glBindTexture(GL_TEXTURE_2D, rtex.tex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texwidth, texheight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+		float umax = (float)rtex.width / (float)rtex.tex_width;
+		float vmax = (float)rtex.height / (float)rtex.tex_height;
+		vr_tex_bounds[0] = openvr_tex_bounds(0, 1.0 - vmax, 0.5 * umax, 1.0);
+		vr_tex_bounds[1] = openvr_tex_bounds(0.5 * umax, 1.0 - vmax, umax, 1.0);
 
-		rtex.tex_width = texwidth;
-		rtex.tex_height = texheight;
-	}
+		// make sure we have the correct viewport in case the user never called goatvr_set_fb_size
+		if(win_width == -1) {
+			int vp[4];
+			glGetIntegerv(GL_VIEWPORT, vp);
+			win_width = vp[2] + vp[0];
+			win_height = vp[3] + vp[1];
+		}
 
-	rtex.width = fbwidth;
-	rtex.height = fbheight;
-
-	// prepare the OpenVR texture and texture bounds structs
-	vr_tex.handle = (void*)rtex.tex;
-	vr_tex.eType = API_OpenGL;
-	vr_tex.eColorSpace = ColorSpace_Linear;
-
-	float umax = (float)rtex.width / (float)rtex.tex_width;
-	float vmax = (float)rtex.height / (float)rtex.tex_height;
-	vr_tex_bounds[0] = openvr_tex_bounds(0, 1.0 - vmax, 0.5 * umax, 1.0);
-	vr_tex_bounds[1] = openvr_tex_bounds(0.5 * umax, 1.0 - vmax, umax, 1.0);
-
-	// make sure we have the correct viewport in case the user never called goatvr_set_fb_size
-	if(win_width == -1) {
-		int vp[4];
-		glGetIntegerv(GL_VIEWPORT, vp);
-		win_width = vp[2] + vp[0];
-		win_height = vp[3] + vp[1];
+		rtex_valid = true;
 	}
 	return &rtex;
 }

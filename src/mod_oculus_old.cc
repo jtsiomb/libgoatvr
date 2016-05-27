@@ -34,9 +34,7 @@ ModuleOculusOld::ModuleOculusOld()
 {
 	hmd = 0;
 	fakehmd = ovrHmd_None;
-
-	memset(&rtex, 0, sizeof rtex);
-	rtex.fbscale = 1.0f;
+	rtex_valid = false;
 
 	win_width = win_height = -1;
 }
@@ -166,6 +164,12 @@ void ModuleOculusOld::stop()
 {
 	if(!hmd) return;	// not started
 
+	if(rtex.tex) {
+		glDeleteTextures(1, &rtex.tex);
+		rtex.tex = 0;
+	}
+	rtex_valid = false;
+
 	ovrHmd_Destroy(hmd);
 	hmd = 0;
 }
@@ -215,7 +219,10 @@ void ModuleOculusOld::update()
 
 void ModuleOculusOld::set_fbsize(int width, int height, float fbscale)
 {
-	rtex.fbscale = fbscale;
+	if(fbscale != rtex.fbscale) {
+		rtex.fbscale = fbscale;
+		rtex_valid = false;
+	}
 	// this is only used for the mirror texture
 	win_width = width;
 	win_height = height;
@@ -223,54 +230,36 @@ void ModuleOculusOld::set_fbsize(int width, int height, float fbscale)
 
 RenderTexture *ModuleOculusOld::get_render_texture()
 {
-	ovrSizei texsz[2];
-	for(int i=0; i<2; i++) {
-		ovrEyeType eye = (ovrEyeType)i;
-		texsz[i] = ovrHmd_GetFovTextureSize(hmd, eye, hmd->DefaultEyeFov[i], rtex.fbscale);
+	if(!rtex_valid) {
+		ovrSizei texsz[2];
+		for(int i=0; i<2; i++) {
+			ovrEyeType eye = (ovrEyeType)i;
+			texsz[i] = ovrHmd_GetFovTextureSize(hmd, eye, hmd->DefaultEyeFov[i], rtex.fbscale);
 
-		rtex.eye_width[i] = texsz[i].w;
-		rtex.eye_height[i] = texsz[i].h;
-		rtex.eye_yoffs[i] = 0;
-	}
-	rtex.eye_xoffs[0] = 0;
-	rtex.eye_xoffs[1] = rtex.eye_width[0];
+			rtex.eye_width[i] = texsz[i].w;
+			rtex.eye_height[i] = texsz[i].h;
+			rtex.eye_yoffs[i] = 0;
+		}
+		rtex.eye_xoffs[0] = 0;
+		rtex.eye_xoffs[1] = rtex.eye_width[0];
 
-	int fbwidth = texsz[0].w + texsz[1].w;
-	int fbheight = std::max(texsz[0].h, texsz[1].h);
+		int fbwidth = texsz[0].w + texsz[1].w;
+		int fbheight = std::max(texsz[0].h, texsz[1].h);
 
-	int texwidth = next_pow2(fbwidth);
-	int texheight = next_pow2(fbheight);
+		rtex.update(fbwidth, fbheight);
 
-	if(!rtex.tex) {
-		glGenTextures(1, &rtex.tex);
-		glBindTexture(GL_TEXTURE_2D, rtex.tex);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		rtex.tex_width = -1; // invalidate width to force a tex rebuild
-	}
+		// prepare the ovrGLTexture
+		for(int i=0; i<2; i++) {
+			ovr_gltex[i].OGL.Header.API = ovrRenderAPI_OpenGL;
+			ovr_gltex[i].OGL.Header.TextureSize.w = rtex.tex_width;
+			ovr_gltex[i].OGL.Header.TextureSize.h = rtex.tex_height;
+			ovr_gltex[i].OGL.Header.RenderViewport.Pos.x = i == 0 ? 0 : fbwidth / 2;
+			ovr_gltex[i].OGL.Header.RenderViewport.Pos.y = 0;
+			ovr_gltex[i].OGL.Header.RenderViewport.Size = {rtex.eye_width[i], rtex.eye_height[i]};
+			ovr_gltex[i].OGL.TexId = rtex.tex;
+		}
 
-	// recreate the texture if necessary
-	if(rtex.tex_width != texwidth || rtex.tex_height != texheight) {
-		print_info("creating %dx%d texture for %dx%d framebuffer\n", texwidth, texheight, fbwidth, fbheight);
-		glBindTexture(GL_TEXTURE_2D, rtex.tex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texwidth, texheight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-
-		rtex.tex_width = texwidth;
-		rtex.tex_height = texheight;
-	}
-
-	rtex.width = fbwidth;
-	rtex.height = fbheight;
-
-	// prepare the ovrGLTexture
-	for(int i=0; i<2; i++) {
-		ovr_gltex[i].OGL.Header.API = ovrRenderAPI_OpenGL;
-		ovr_gltex[i].OGL.Header.TextureSize.w = texwidth;
-		ovr_gltex[i].OGL.Header.TextureSize.h = texheight;
-		ovr_gltex[i].OGL.Header.RenderViewport.Pos.x = i == 0 ? 0 : fbwidth / 2;
-		ovr_gltex[i].OGL.Header.RenderViewport.Pos.y = 0;
-		ovr_gltex[i].OGL.Header.RenderViewport.Size = {rtex.eye_width[i], rtex.eye_height[i]};
-		ovr_gltex[i].OGL.TexId = rtex.tex;
+		rtex_valid = true;
 	}
 	return &rtex;
 }

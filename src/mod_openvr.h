@@ -13,6 +13,7 @@ protected:
 	int def_fbwidth, def_fbheight;	// recommended by OpenVR fb size
 
 	RenderTexture rtex;
+	bool rtex_valid;
 	vr::Texture_t vr_tex;
 	vr::VRTextureBounds_t vr_tex_bounds[2];
 

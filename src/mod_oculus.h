@@ -11,6 +11,7 @@ namespace goatvr {
 class ModuleOculus : public Module {
 protected:
 	RenderTexture rtex;
+	bool rtex_valid;
 	ovrSession ovr;
 	ovrHmdDesc hmd;
 	ovrEyeRenderDesc rdesc[2];
@@ -52,6 +53,7 @@ public:
 	void set_fbsize(int width, int height, float fbscale);
 	RenderTexture *get_render_texture();
 
+	void draw_start();
 	void draw_done();
 	void draw_mirror();
 

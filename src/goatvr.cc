@@ -13,6 +13,8 @@ namespace goatvr {
 void register_modules();	// auto-generated function during build
 }
 
+static bool update_fbo();
+
 static goatvr_origin_mode origin_mode = GOATVR_FLOOR;
 
 static bool in_vr;
@@ -253,49 +255,9 @@ int goatvr_get_fb_texture_height()
 
 unsigned int goatvr_get_fbo(void)
 {
-	static unsigned int last_tex;	// last texture we got from Module::get_render_texture()
-
-	if(!render_module) {
-		return 0;
-	}
-
-	RenderTexture *rtex = render_module->get_render_texture();
-	if(!rtex) {
-		return 0;
-	}
-
-	if(!fbo) {
-		glGenFramebuffers(1, &fbo);
-		glGenRenderbuffers(1, &zbuf);
-	}
-
-	/* every time we call Module::get_render_texture() we might get a different texture
-	 * make sure to re-bind it as the fbo color attachment if it changed
-	 */
-	if(last_tex != rtex->tex) {
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtex->tex, 0);
-		last_tex = rtex->tex;
-	}
-
-	// resize fbo if necessary (or if it's the first time)
-	if(fbo_width != rtex->tex_width || fbo_height != rtex->tex_height) {
-		fbo_width = rtex->tex_width;
-		fbo_height = rtex->tex_height;
-
-		glBindRenderbuffer(GL_RENDERBUFFER, zbuf);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbo_width, fbo_height);
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, zbuf);
-
-		GLenum fbst = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		if(fbst != GL_FRAMEBUFFER_COMPLETE) {
-			fprintf(stderr, "goatvr: incomplete framebuffer! (status: %x)\n", (unsigned int)fbst);
-			return 0;
-		}
-	}
 	return fbo;
 }
+
 
 void goatvr_viewport(int eye)
 {
@@ -329,12 +291,10 @@ float *goatvr_projection_matrix(int eye, float znear, float zfar)
 
 void goatvr_draw_start(void)
 {
-	/* NOTE: we must call goatvr_get_fbo instead of accessing fbo directly here
-	 * to make sure we have an up to date render texture and framebuffer object
-	 */
-	glBindFramebuffer(GL_FRAMEBUFFER, goatvr_get_fbo());
+	render_module->draw_start(); // this needs to be called before update_fbo for oculus
 
-	render_module->draw_start();
+	update_fbo();
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
 	update();	// this needs to be called *after* draw_start for oculus_old
 }
@@ -369,4 +329,51 @@ unsigned int goatvr::next_pow2(unsigned int x)
 	x |= x >> 8;
 	x |= x >> 16;
 	return x + 1;
+}
+
+
+static bool update_fbo()
+{
+	static unsigned int last_tex;	// last texture we got from Module::get_render_texture()
+
+	if(!render_module) {
+		return false;
+	}
+
+	RenderTexture *rtex = render_module->get_render_texture();
+	if(!rtex) {
+		return false;
+	}
+
+	if(!fbo) {
+		glGenFramebuffers(1, &fbo);
+		glGenRenderbuffers(1, &zbuf);
+	}
+
+	/* every time we call Module::get_render_texture() we might get a different texture
+	 * make sure to re-bind it as the fbo color attachment if it changed
+	 */
+	if(last_tex != rtex->tex) {
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rtex->tex, 0);
+		last_tex = rtex->tex;
+	}
+
+	// resize fbo if necessary (or if it's the first time)
+	if(fbo_width != rtex->tex_width || fbo_height != rtex->tex_height) {
+		fbo_width = rtex->tex_width;
+		fbo_height = rtex->tex_height;
+
+		glBindRenderbuffer(GL_RENDERBUFFER, zbuf);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, fbo_width, fbo_height);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, zbuf);
+
+		GLenum fbst = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		if(fbst != GL_FRAMEBUFFER_COMPLETE) {
+			fprintf(stderr, "goatvr: incomplete framebuffer! (status: %x)\n", (unsigned int)fbst);
+			return false;
+		}
+	}
+	return true;
 }

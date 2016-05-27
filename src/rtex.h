@@ -3,13 +3,18 @@
 
 namespace goatvr {
 
-struct RenderTexture {
+class RenderTexture {
+public:
 	unsigned int tex;
 	int width, height;
 	int tex_width, tex_height;
 	int eye_xoffs[2], eye_yoffs[2];
 	int eye_width[2], eye_height[2];
 	float fbscale;
+
+	RenderTexture();
+
+	void update(int xsz, int ysz);
 };
 
 }	// namespace goatvr
