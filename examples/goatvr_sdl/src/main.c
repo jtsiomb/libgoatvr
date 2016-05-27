@@ -18,6 +18,7 @@ static SDL_Window *win;
 static SDL_GLContext ctx;
 static int width, height;
 static int done;
+static int should_swap;
 
 static unsigned int chess_tex;
 
@@ -78,6 +79,7 @@ static int init(void)
 		return -1;
 	}
 	goatvr_startvr();
+	should_swap = goatvr_should_swap();
 
 	return 0;
 }
@@ -118,7 +120,9 @@ static void draw(void)
 	glClearColor(1, 0, 1, 1);
 	goatvr_draw_done();
 
-	SDL_GL_SwapWindow(win);
+	if(should_swap) {
+		SDL_GL_SwapWindow(win);
+	}
 	assert(glGetError() == GL_NO_ERROR);
 }
 

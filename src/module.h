@@ -65,6 +65,9 @@ public:
 	virtual void draw_done();
 	virtual void draw_mirror();
 
+	// should the user do buffer-swaps on their window?
+	virtual bool should_swap() const;
+
 	virtual Mat4 get_view_matrix(int eye);
 	virtual Mat4 get_proj_matrix(int eye, float znear, float zfar);
 

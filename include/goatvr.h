@@ -86,6 +86,18 @@ void goatvr_draw_eye(int eye);
 /* done drawing both eyes, the frame is ready to be presented */
 void goatvr_draw_done(void);
 
+/* some VR modules (only oculus_old currently) need to take over the user
+ * window buffer swapping, and won't work properly if the user does a swap
+ * at the end of every frame. This function returns true (non-zero) if the
+ * user should perform buffer swaps on their window, or false (zero) if the
+ * VR module needs to handle them.
+ * example:
+ *   if(goatvr_should_swap()) {
+ *       SDL_GL_SwapWindow(win);
+ *   }
+ */
+int goatvr_should_swap(void);
+
 /* ---- input device handling ---- */
 int goatvr_num_devices(void);
 goatvr_device *goatvr_get_device(int idx);

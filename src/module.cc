@@ -104,6 +104,11 @@ void Module::draw_mirror()
 {
 }
 
+bool Module::should_swap() const
+{
+	return true;
+}
+
 Mat4 Module::get_view_matrix(int eye)
 {
 	return Mat4::identity;

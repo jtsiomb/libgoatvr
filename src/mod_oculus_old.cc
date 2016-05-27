@@ -123,6 +123,8 @@ void ModuleOculusOld::start()
 	// *attempt* to go fullscreen on the rift
 	if(!fakehmd) {
 		hmd_fullscreen(hmd->WindowsPos.x, hmd->WindowsPos.y);
+	} else {
+		win_resize(hmd->Resolution.w, hmd->Resolution.h);
 	}
 
 	// enable position and rotation tracking
@@ -132,8 +134,8 @@ void ModuleOculusOld::start()
 	// fill the ovrGLConfig structure
 	memset(&ovr_glcfg, 0, sizeof ovr_glcfg);
 	ovr_glcfg.OGL.Header.API = ovrRenderAPI_OpenGL;
-	ovr_glcfg.OGL.Header.BackBufferSize.w = hmd->Resolution.h;
-	ovr_glcfg.OGL.Header.BackBufferSize.h = hmd->Resolution.w;
+	ovr_glcfg.OGL.Header.BackBufferSize.w = fakehmd ? hmd->Resolution.w : hmd->Resolution.h;
+	ovr_glcfg.OGL.Header.BackBufferSize.h = fakehmd ? hmd->Resolution.h : hmd->Resolution.w;
 	ovr_glcfg.OGL.Header.Multisample = 1;
 #ifdef OVR_OS_WIN32
 	ovr_glcfg.OGL.Window = GetActiveWindow();
@@ -152,12 +154,16 @@ void ModuleOculusOld::start()
 	// configure SDK-rendering and enable display overdrive and timewarp
 	unsigned int distort_caps = ovrDistortionCap_TimeWarp | ovrDistortionCap_Overdrive;
 #ifdef OVR_OS_LINUX
-	distort_caps |= ovrDistortionCap_LinuxDevFullscreen;
+	if(!fakehmd) {
+		distort_caps |= ovrDistortionCap_LinuxDevFullscreen;
+	}
 #endif
 	ovrHmd_ConfigureRendering(hmd, &ovr_glcfg.Config, distort_caps, hmd->DefaultEyeFov, ovr_rdesc);
 
 	// force creation of the render target when start is called
 	get_render_texture();
+
+	ovrHmd_DismissHSWDisplay(hmd);
 }
 
 void ModuleOculusOld::stop()
@@ -274,6 +280,12 @@ void ModuleOculusOld::draw_done()
 	ovrHmd_EndFrame(hmd, ovr_poses, &ovr_gltex[0].Texture);
 }
 
+bool ModuleOculusOld::should_swap() const
+{
+	// Oculus SDK 0.5 needs to handle buffer swaps itself
+	return false;
+}
+
 Mat4 ModuleOculusOld::get_view_matrix(int eye)
 {
 	return eye_inv_xform[eye];
@@ -304,12 +316,14 @@ static ovrHmdType parse_hmdtype(const char *s)
 		{ 0, ovrHmd_None }
 	};
 
+	if(!s) return ovrHmd_None;
+
 	for(int i=0; hmds[i].name; i++) {
 		if(strcasecmp(s, hmds[i].name) == 0) {
 			return hmds[i].type;
 		}
 	}
-	return s ? ovrHmd_DK2 : ovrHmd_None;
+	return ovrHmd_DK2;
 }
 
 #else

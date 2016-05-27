@@ -56,6 +56,8 @@ public:
 	void draw_start();
 	void draw_done();
 
+	bool should_swap() const;
+
 	Mat4 get_view_matrix(int eye);
 	Mat4 get_proj_matrix(int eye, float znear, float zfar);
 };

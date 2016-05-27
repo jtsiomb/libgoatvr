@@ -26,6 +26,8 @@ static unsigned int fbo;
 static unsigned int zbuf;
 static int fbo_width, fbo_height;
 
+static bool user_swap = true;
+
 extern "C" {
 
 int goatvr_init()
@@ -119,6 +121,8 @@ void goatvr_startvr()
 
 	// make sure any changes done while not in VR make it through to the module
 	render_module->set_origin_mode(origin_mode);
+
+	user_swap = render_module->should_swap();
 }
 
 void goatvr_stopvr()
@@ -315,6 +319,11 @@ void goatvr_draw_done()
 	render_module->draw_mirror();
 
 	render_module->draw_done();
+}
+
+int goatvr_should_swap()
+{
+	return user_swap ? 1 : 0;
 }
 
 }	// extern "C"
