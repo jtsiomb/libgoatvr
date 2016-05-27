@@ -100,7 +100,6 @@ static void cleanup(void)
 static void draw(void)
 {
 	int i;
-	unsigned int tex = goatvr_get_fb_texture();
 
 	goatvr_draw_start();
 	glClearColor(1, 0, 0, 1);
@@ -152,7 +151,6 @@ static void draw_scene()
 	glDisable(GL_TEXTURE_2D);
 	glPopMatrix();
 
-	return;
 	for(int i=0; i<4; i++) {
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, grey);
 		glPushMatrix();

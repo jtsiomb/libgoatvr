@@ -102,6 +102,9 @@ void ModuleOculusOld::start()
 		win_height = vp[3];
 	}
 
+	// get some useful values
+	eye_height = ovrHmd_GetFloat(hmd, OVR_KEY_EYE_HEIGHT, 1.65);
+
 
 	// *attempt* to go fullscreen on the rift
 	hmd_fullscreen(hmd->WindowsPos.x, hmd->WindowsPos.y);
@@ -113,8 +116,8 @@ void ModuleOculusOld::start()
 	// fill the ovrGLConfig structure
 	memset(&ovr_glcfg, 0, sizeof ovr_glcfg);
 	ovr_glcfg.OGL.Header.API = ovrRenderAPI_OpenGL;
-	ovr_glcfg.OGL.Header.BackBufferSize.h = win_width;
-	ovr_glcfg.OGL.Header.BackBufferSize.w = win_height;
+	ovr_glcfg.OGL.Header.BackBufferSize.w = hmd->Resolution.h;
+	ovr_glcfg.OGL.Header.BackBufferSize.h = hmd->Resolution.w;
 	ovr_glcfg.OGL.Header.Multisample = 1;
 #ifdef OVR_OS_WIN32
 	ovr_glcfg.OGL.Window = GetActiveWindow();
@@ -180,15 +183,16 @@ void ModuleOculusOld::update()
 
 		Mat4 rmat = eye_rot[i].calc_matrix();
 		Mat4 tmat;
-		tmat.translation(eye_pos[i]);
-		eye_xform[i] = rmat * tmat;
-
-		rmat.transpose();
 		tmat.translation(-eye_pos[i]);
+		if(origin_mode == GOATVR_FLOOR) {
+			tmat.translate(0, -eye_height, 0);
+		}
 		eye_inv_xform[i] = tmat * rmat;
+
+		// TODO eye_xform
+
 	}
 	// TODO do we have to translate by eye_offs?
-	// TODO if origin is floor, also translate by -OVR_KEY_EYE_HEIGHT
 }
 
 void ModuleOculusOld::set_fbsize(int width, int height, float fbscale)

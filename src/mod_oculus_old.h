@@ -23,6 +23,8 @@ protected:
 	Quat eye_rot[2];
 	Mat4 eye_xform[2], eye_inv_xform[2];
 
+	float eye_height;
+
 	int win_width, win_height;
 
 public:
