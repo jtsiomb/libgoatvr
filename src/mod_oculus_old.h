@@ -17,6 +17,8 @@ protected:
 	ovrGLConfig ovr_glcfg;
 	ovrPosef ovr_poses[2];
 
+	ovrHmdType fakehmd;
+
 	goatvr_origin_mode origin_mode;
 
 	Vec3 eye_pos[2];

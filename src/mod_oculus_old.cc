@@ -16,17 +16,24 @@
 #include <windows.h>
 #endif
 
+#ifdef _MSC_VER
+#define strcasecmp	stricmp
+#endif
+
+
 REG_MODULE(oculus_old, ModuleOculusOld)
 
 using namespace goatvr;
 
 static Mat4 ovr_matrix(const ovrMatrix4f &mat);
+static ovrHmdType parse_hmdtype(const char *s);
 
 
 
 ModuleOculusOld::ModuleOculusOld()
 {
 	hmd = 0;
+	fakehmd = ovrHmd_None;
 
 	memset(&rtex, 0, sizeof rtex);
 	rtex.fbscale = 1.0f;
@@ -49,6 +56,8 @@ bool ModuleOculusOld::init()
 		print_error("failed to initialize libovr\n");
 		return false;
 	}
+
+	fakehmd = parse_hmdtype(getenv("GOATVR_FAKEHMD"));
 	return true;
 }
 
@@ -75,7 +84,7 @@ bool ModuleOculusOld::detect()
 {
 	print_info("running HMD detection\n");
 
-	if(ovrHmd_Detect() <= 0) {
+	if(ovrHmd_Detect() <= 0 && !fakehmd) {
 		print_info("none available\n");
 		avail = false;
 		return false;
@@ -90,9 +99,16 @@ void ModuleOculusOld::start()
 {
 	if(hmd) return;		// already started
 
-	if(!(hmd = ovrHmd_Create(0))) {
-		print_error("failed to create oculus HMD\n");
-		return;
+	if(fakehmd) {
+		if(!(hmd = ovrHmd_CreateDebug(fakehmd))) {
+			print_error("failed to create oculus debug HMD\n");
+			return;
+		}
+	} else {
+		if(!(hmd = ovrHmd_Create(0))) {
+			print_error("failed to create oculus HMD\n");
+			return;
+		}
 	}
 
 	if(win_width == -1) {
@@ -107,7 +123,9 @@ void ModuleOculusOld::start()
 
 
 	// *attempt* to go fullscreen on the rift
-	hmd_fullscreen(hmd->WindowsPos.x, hmd->WindowsPos.y);
+	if(!fakehmd) {
+		hmd_fullscreen(hmd->WindowsPos.x, hmd->WindowsPos.y);
+	}
 
 	// enable position and rotation tracking
 	ovrHmd_ConfigureTracking(hmd, ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection
@@ -284,6 +302,25 @@ static Mat4 ovr_matrix(const ovrMatrix4f &mat)
 			mat.M[0][1], mat.M[1][1], mat.M[2][1], mat.M[3][1],
 			mat.M[0][2], mat.M[1][2], mat.M[2][2], mat.M[3][2],
 			mat.M[0][3], mat.M[1][3], mat.M[2][3], mat.M[3][3]);
+}
+
+static ovrHmdType parse_hmdtype(const char *s)
+{
+	static const struct { const char *name; ovrHmdType type; } hmds[] = {
+		{ "dk1", ovrHmd_DK1 },
+		{ "dk2", ovrHmd_DK2 },
+		{ "dkhd", ovrHmd_DKHD },
+		{ "blackstar", ovrHmd_BlackStar },
+		{ "cb", ovrHmd_CB },
+		{ 0, ovrHmd_None }
+	};
+
+	for(int i=0; hmds[i].name; i++) {
+		if(strcasecmp(s, hmds[i].name) == 0) {
+			return hmds[i].type;
+		}
+	}
+	return s ? ovrHmd_DK2 : ovrHmd_None;
 }
 
 #else

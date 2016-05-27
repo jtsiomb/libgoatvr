@@ -10,6 +10,7 @@ static struct {
 } modprio[] = {
 	{ "oculus", 128 },
 	{ "openvr", 127 },
+	{ "oculus_old", 126 },
 	{ "glstereo", 64 },
 	{ "anaglyph", 63},
 	{ "sbs", 62},
