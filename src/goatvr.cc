@@ -265,8 +265,8 @@ unsigned int goatvr_get_fbo(void)
 
 void goatvr_viewport(int eye)
 {
-	if(render_module) {
-		RenderTexture *rtex = render_module->get_render_texture();
+	RenderTexture *rtex = render_module ? render_module->get_render_texture() : 0;
+	if(rtex) {
 		glViewport(rtex->eye_xoffs[eye], rtex->eye_yoffs[eye], rtex->eye_width[eye], rtex->eye_height[eye]);
 	} else {
 		glViewport(eye == 0 ? 0 : cur_fbwidth / 2, 0, cur_fbwidth / 2, cur_fbheight);
@@ -298,7 +298,9 @@ void goatvr_draw_start(void)
 	render_module->draw_start(); // this needs to be called before update_fbo for oculus
 
 	update_fbo();
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	if(fbo) {
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	}
 
 	update();	// this needs to be called *after* draw_start for oculus_old
 }
@@ -315,7 +317,9 @@ void goatvr_draw_done()
 {
 	if(!render_module) return;
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	if(fbo) {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
 	render_module->draw_mirror();
 
 	render_module->draw_done();
