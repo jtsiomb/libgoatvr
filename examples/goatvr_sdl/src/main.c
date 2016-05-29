@@ -109,7 +109,7 @@ static void cleanup(void)
 
 static void update(float dt)
 {
-	const float speed = 1.0;
+	const float speed = 5.0;
 	float dir_x = 0, dir_y = 0;
 
 	if(keystate['w'] || keystate['W']) {
@@ -125,7 +125,7 @@ static void update(float dt)
 		dir_x -= speed * dt;
 	}
 
-	float theta = cam_theta * 180.0 / M_PI;
+	float theta = cam_theta / 180.0 * M_PI;
 	cam_pos[0] += dir_x * cos(theta) + dir_y * sin(theta);
 	cam_pos[2] -= -dir_x * sin(theta) + dir_y * cos(theta);
 }
