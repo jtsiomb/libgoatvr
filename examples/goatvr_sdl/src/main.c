@@ -26,6 +26,8 @@ static unsigned int chess_tex;
 
 static float cam_pos[3];
 static float cam_theta, cam_phi;
+static unsigned int start_time;
+static int keystate[256];
 
 int main(int argc, char **argv)
 {
@@ -86,6 +88,7 @@ static int init(void)
 	goatvr_startvr();
 	should_swap = goatvr_should_swap();
 
+	start_time = SDL_GetTicks();
 	return 0;
 }
 
@@ -104,9 +107,38 @@ static void cleanup(void)
 	SDL_Quit();
 }
 
+static void update(float dt)
+{
+	const float speed = 1.0;
+	float dir_x = 0, dir_y = 0;
+
+	if(keystate['w'] || keystate['W']) {
+		dir_y += speed * dt;
+	}
+	if(keystate['s'] || keystate['S']) {
+		dir_y -= speed * dt;
+	}
+	if(keystate['d'] || keystate['D']) {
+		dir_x += speed * dt;
+	}
+	if(keystate['a'] || keystate['A']) {
+		dir_x -= speed * dt;
+	}
+
+	float theta = cam_theta * 180.0 / M_PI;
+	cam_pos[0] += dir_x * cos(theta) + dir_y * sin(theta);
+	cam_pos[2] -= -dir_x * sin(theta) + dir_y * cos(theta);
+}
+
 static void draw(void)
 {
 	int i;
+	unsigned int msec = SDL_GetTicks() - start_time;
+	static unsigned int prev_msec;
+	float dt = (msec - prev_msec) / 1000.0f;
+	prev_msec = msec;
+
+	update(dt);
 
 	goatvr_draw_start();
 	glClearColor(0.4, 0.14, 0.1, 1);
@@ -293,6 +325,9 @@ static void handle_event(SDL_Event *ev)
 
 static void handle_key(int key, int press)
 {
+	if(key < 256) {
+		keystate[key] = press;
+	}
 	if(press) {
 		switch(key) {
 		case SDLK_ESCAPE:
