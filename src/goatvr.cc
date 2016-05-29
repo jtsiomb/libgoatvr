@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "opengl.h"
 #include "goatvr_impl.h"
 #include "modman.h"
@@ -27,6 +28,10 @@ static unsigned int zbuf;
 static int fbo_width, fbo_height;
 
 static bool user_swap = true;
+
+// user information
+static float user_eye_height = 1.65;
+static goatvr_user_gender user_gender = GOATVR_USER_UNKNOWN;
 
 extern "C" {
 
@@ -338,8 +343,90 @@ int goatvr_should_swap()
 	return user_swap ? 1 : 0;
 }
 
+// ---- module management ----
+
+int goatvr_activate_module(goatvr_module *vrmod)
+{
+	activate(vrmod);
+	return 0;
+}
+
+int goatvr_deactivate_module(goatvr_module *vrmod)
+{
+	deactivate(vrmod);
+	return 0;
+}
+
+int goatvr_num_modules()
+{
+	return get_num_modules();
+}
+
+goatvr_module *goatvr_get_module(int idx)
+{
+	return get_module(idx);
+}
+
+goatvr_module *goatvr_find_module(const char *name)
+{
+	return find_module(name);
+}
+
+const char *goatvr_module_name(goatvr_module *vrmod)
+{
+	return vrmod->get_name();
+}
+
+int goatvr_module_active(goatvr_module *vrmod)
+{
+	return vrmod->active();
+}
+
+int goatvr_module_usable(goatvr_module *vrmod)
+{
+	return vrmod->usable();
+}
+
+// ---- user information ----
+
+float goatvr_get_eye_height()
+{
+	return user_eye_height;
+}
+
+goatvr_user_gender goatvr_get_user_gender()
+{
+	return user_gender;
+}
+
+// ----- utility functions ----
+
+void goatvr_util_quat_to_matrix(float *mat, const float *quat)
+{
+	Quat q = Quat(quat[0], quat[1], quat[2], quat[3]);
+	Mat4 qmat = q.calc_matrix();
+	memcpy(mat, qmat[0], 16 * sizeof(float));
+}
+
+int goatvr_util_invert_matrix(float *inv, const float *mat)
+{
+	Mat4 m = Mat4(mat);
+	bool res = m.inverse();
+	memcpy(inv, m[0], 16 * sizeof(float));
+	return res;
+}
+
 }	// extern "C"
 
+void goatvr::set_user_eye_height(float height)
+{
+	user_eye_height = height;
+}
+
+void goatvr::set_user_gender(goatvr_user_gender gender)
+{
+	user_gender = gender;
+}
 
 unsigned int goatvr::next_pow2(unsigned int x)
 {

@@ -74,7 +74,6 @@ Mat4 ModuleSBS::get_view_matrix(int eye)
 	Mat4 xform;
 
 	xform.translation(eye_offs[eye], 0, 0);
-	// TODO what about height
 	if(origin_mode == GOATVR_FLOOR) {
 		xform.translate(0, -1.65, 0);
 	}

@@ -18,6 +18,9 @@ typedef goatvr::Device goatvr_device;
 
 namespace goatvr {
 
+void set_user_eye_height(float height);
+void set_user_gender(goatvr_user_gender gender);
+
 unsigned int next_pow2(unsigned int x);
 
 }
