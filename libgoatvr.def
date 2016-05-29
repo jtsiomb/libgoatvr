@@ -1,32 +1,52 @@
 LIBRARY libgoatvr
 EXPORTS
-	vr_init
-	vr_shutdown
-
-	vr_module_count
-	vr_module_name
-
-	vr_use_module
-	vr_use_module_named
-
-	vr_seti
-	vr_setf
-	vr_geti
-	vr_getf
-	vr_geti_def
-	vr_getf_def
-
-	vr_view_translation
-	vr_view_rotation
-
-	vr_view_matrix
-	vr_proj_matrix
-
-	vr_begin
-	vr_end
-	vr_swap_buffers
-
-	vr_output_texture
-	vr_output_texture_eye
-
-	vr_recenter
+	goatvr_init
+	goatvr_shutdown
+	goatvr_detect
+	goatvr_startvr
+	goatvr_stopvr
+	goatvr_invr
+	goatvr_set_origin_mode
+	goatvr_get_origin_mode
+	goatvr_recenter
+	goatvr_have_headtracking
+	goatvr_set_fb_size
+	goatvr_get_fb_scale
+	goatvr_get_fb_width
+	goatvr_get_fb_height
+	goatvr_get_fb_eye_width
+	goatvr_get_fb_eye_height
+	goatvr_get_fb_eye_xoffset
+	goatvr_get_fb_eye_yoffset
+	goatvr_get_fb_texture
+	goatvr_get_fb_texture_width
+	goatvr_get_fb_texture_height
+	goatvr_get_fbo
+	goatvr_viewport
+	goatvr_view_matrix
+	goatvr_projection_matrix
+	goatvr_draw_start
+	goatvr_draw_eye
+	goatvr_draw_done
+	goatvr_should_swap
+	goatvr_num_devices
+	goatvr_get_device
+	goatvr_device_name
+	goatvr_device_spatial
+	goatvr_device_num_axes
+	goatvr_device_num_buttons
+	goatvr_device_position
+	goatvr_device_orientation
+	goatvr_device_matrix
+	goatvr_activate_module
+	goatvr_deactivate_module
+	goatvr_num_modules
+	goatvr_get_module
+	goatvr_find_module
+	goatvr_module_name
+	goatvr_module_active
+	goatvr_module_usable
+	goatvr_get_eye_height
+	goatvr_get_user_gender
+	goatvr_util_quat_to_matrix
+	goatvr_util_invert_matrix
