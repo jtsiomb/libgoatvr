@@ -124,6 +124,11 @@ void ModuleOculus::recenter()
 	}
 }
 
+bool ModuleOculus::have_headtracking() const
+{
+	return true;
+}
+
 void ModuleOculus::update()
 {
 	ovrVector3f eye_offs[2] = { rdesc[0].HmdToEyeOffset, rdesc[1].HmdToEyeOffset };

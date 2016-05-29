@@ -131,6 +131,11 @@ void ModuleOpenVR::recenter()
 	vr->ResetSeatedZeroPose();
 }
 
+bool ModuleOpenVR::have_headtracking() const
+{
+	return true;
+}
+
 void ModuleOpenVR::update()
 {
 	// XXX is this going to block?

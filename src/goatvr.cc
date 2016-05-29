@@ -155,6 +155,14 @@ void goatvr_recenter()
 	}
 }
 
+int goatvr_have_headtracking()
+{
+	if(render_module) {
+		return render_module->have_headtracking();
+	}
+	return 0;	// TODO allow other devices to be bound as head-trackers
+}
+
 // ---- rendering ----
 
 void goatvr_set_fb_size(int width, int height, float scale)

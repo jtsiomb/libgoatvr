@@ -54,6 +54,8 @@ public:
 	virtual void set_origin_mode(goatvr_origin_mode mode);
 	virtual void recenter();
 
+	virtual bool have_headtracking() const;
+
 	virtual void update();
 
 	// rendering ops are only valid on rendering modules

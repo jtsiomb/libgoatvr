@@ -75,6 +75,11 @@ void Module::recenter()
 {
 }
 
+bool Module::have_headtracking() const
+{
+	return false;
+}
+
 void Module::update()
 {
 }

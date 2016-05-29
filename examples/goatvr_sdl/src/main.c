@@ -12,6 +12,8 @@ static void draw_box(float xsz, float ysz, float zsz, float norm_sign);
 static void reshape(int x, int y);
 static void handle_event(SDL_Event *ev);
 static void handle_key(int key, int press);
+static void handle_mouse_button(int bn, int st, int x, int y);
+static void handle_mouse_motion(int x, int y);
 static unsigned int gen_chess_tex(float r0, float g0, float b0, float r1, float g1, float b1);
 
 static SDL_Window *win;
@@ -21,6 +23,9 @@ static int done;
 static int should_swap;
 
 static unsigned int chess_tex;
+
+static float cam_pos[3];
+static float cam_theta, cam_phi;
 
 int main(int argc, char **argv)
 {
@@ -104,7 +109,7 @@ static void draw(void)
 	int i;
 
 	goatvr_draw_start();
-	glClearColor(1, 0, 0, 1);
+	glClearColor(0.4, 0.14, 0.1, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	for(i=0; i<2; i++) {
@@ -114,10 +119,12 @@ static void draw(void)
 		glLoadMatrixf(goatvr_projection_matrix(i, 0.5, 500.0));
 		glMatrixMode(GL_MODELVIEW);
 		glLoadMatrixf(goatvr_view_matrix(i));
+		glRotatef(cam_phi, 1, 0, 0);
+		glRotatef(cam_theta, 0, 1, 0);
+		glTranslatef(-cam_pos[0], -cam_pos[1], -cam_pos[2]);
 
 		draw_scene();
 	}
-	glClearColor(1, 0, 1, 1);
 	goatvr_draw_done();
 
 	if(should_swap) {
@@ -268,6 +275,19 @@ static void handle_event(SDL_Event *ev)
 			}
 		}
 		break;
+
+	case SDL_MOUSEBUTTONDOWN:
+	case SDL_MOUSEBUTTONUP:
+		{
+			int bn = ev->button.button - SDL_BUTTON_LEFT;
+			handle_mouse_button(bn, ev->button.state == SDL_PRESSED ? 1 : 0,
+					ev->button.x, ev->button.y);
+		}
+		break;
+
+	case SDL_MOUSEMOTION:
+		handle_mouse_motion(ev->motion.x, ev->motion.y);
+		break;
 	}
 }
 
@@ -294,6 +314,34 @@ static void handle_key(int key, int press)
 			}
 			break;
 		}
+	}
+}
+
+static int prev_x, prev_y;
+static int bnstate[32];
+
+static void handle_mouse_button(int bn, int st, int x, int y)
+{
+	bnstate[bn] = st;
+	prev_x = x;
+	prev_y = y;
+}
+
+static void handle_mouse_motion(int x, int y)
+{
+	int dx = x - prev_x;
+	int dy = y - prev_y;
+	prev_x = x;
+	prev_y = y;
+
+	if(!dx && !dy) return;
+
+	if(bnstate[0]) {
+		cam_theta += dx * 0.5;
+		cam_phi += dy * 0.5;
+
+		if(cam_phi < -90) cam_phi = -90;
+		if(cam_phi > 90) cam_phi = 90;
 	}
 }
 

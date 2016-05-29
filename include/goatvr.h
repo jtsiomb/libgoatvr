@@ -50,6 +50,12 @@ enum goatvr_origin_mode goatvr_get_origin_mode(void);
 
 void goatvr_recenter(void);
 
+/* returns true (non-zero) if the active module provides head-tracking input in
+ * the view matrix, or false (zero) if the provided view matrix just accounts
+ * for stereo separation.
+ */
+int goatvr_have_headtracking(void);
+
 /* ---- rendering ---- */
 void goatvr_set_fb_size(int width, int height, float scale);
 float goatvr_get_fb_scale(void);

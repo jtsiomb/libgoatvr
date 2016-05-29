@@ -192,6 +192,11 @@ void ModuleOculusOld::recenter()
 	}
 }
 
+bool ModuleOculusOld::have_headtracking() const
+{
+	return !fakehmd;
+}
+
 void ModuleOculusOld::update()
 {
 	ovrVector3f eye_offs[2] = {

@@ -48,6 +48,8 @@ public:
 	void set_origin_mode(goatvr_origin_mode mode);
 	void recenter();
 
+	bool have_headtracking() const;
+
 	void update();
 
 	void set_fbsize(int width, int height, float fbscale);
