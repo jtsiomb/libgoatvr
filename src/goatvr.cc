@@ -307,8 +307,9 @@ static float ident_mat[] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
 float *goatvr_view_matrix(int eye)
 {
+	static Mat4 vmat;
 	if(render_module) {
-		Mat4 vmat = render_module->get_view_matrix(eye);
+		vmat = render_module->get_view_matrix(eye);
 		return vmat[0];
 	}
 	return ident_mat;
@@ -316,8 +317,9 @@ float *goatvr_view_matrix(int eye)
 
 float *goatvr_projection_matrix(int eye, float znear, float zfar)
 {
+	static Mat4 pmat;
 	if(render_module) {
-		Mat4 pmat = render_module->get_proj_matrix(eye, znear, zfar);
+		pmat = render_module->get_proj_matrix(eye, znear, zfar);
 		return pmat[0];
 	}
 	return ident_mat;
