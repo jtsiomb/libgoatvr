@@ -21,3 +21,5 @@ done
 echo '}' >>$out
 echo >>$out
 echo '} // namespace goat' >>$out
+
+[ -f CMakeLists.txt ] && touch CMakeLists.txt

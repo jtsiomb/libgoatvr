@@ -41,6 +41,7 @@ int main(int argc, char **argv)
 		goto quit;
 	}
 
+	SDL_GL_SetAttribute(SDL_GL_STEREO, 1);
 	SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
 	if(!(ctx = SDL_GL_CreateContext(win))) {
 		fprintf(stderr, "failed to create OpenGL context\n");
