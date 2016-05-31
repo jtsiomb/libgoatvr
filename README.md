@@ -47,9 +47,9 @@ following:
     make               # build
     sudo make install  # to install it
 
-On windows try running the cmake client, then press configure and generate. This
-will most likely create a visual studio project, which can be opened and
-compiled, linked and optionally installed from within visual studio.
+On windows try running the graphical cmake program, then press configure and
+generate. This will most likely create a visual studio project, which can be
+opened and compiled, linked and optionally installed from within visual studio.
 
 In either case, when running cmake you can choose a number of options, including
 which of the optional modules you want to build. Try running `cmake-gui` or
