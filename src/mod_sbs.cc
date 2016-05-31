@@ -84,7 +84,7 @@ void ModuleSBS::set_fbsize(int width, int height, float fbscale)
 	win_height = height;
 }
 
-Mat4 ModuleSBS::get_view_matrix(int eye)
+Mat4 ModuleSBS::get_view_matrix(int eye) const
 {
 	float eye_offs[] = {0.5f * ipd, -0.5f * ipd};
 
@@ -97,7 +97,7 @@ Mat4 ModuleSBS::get_view_matrix(int eye)
 	return xform;
 }
 
-Mat4 ModuleSBS::get_proj_matrix(int eye, float znear, float zfar)
+Mat4 ModuleSBS::get_proj_matrix(int eye, float znear, float zfar) const
 {
 	// TODO let the user set the fov
 	float vfov = deg_to_rad(60);

@@ -348,12 +348,12 @@ void ModuleOculus::draw_mirror()
 	glPopAttrib();
 }
 
-Mat4 ModuleOculus::get_view_matrix(int eye)
+Mat4 ModuleOculus::get_view_matrix(int eye) const
 {
 	return eye_inv_xform[eye];
 }
 
-Mat4 ModuleOculus::get_proj_matrix(int eye, float znear, float zfar)
+Mat4 ModuleOculus::get_proj_matrix(int eye, float znear, float zfar) const
 {
 	Mat4 m = *(Mat4*)&ovrMatrix4f_Projection(rdesc[eye].Fov, znear, zfar, ovrProjection_ClipRangeOpenGL);
 	return transpose(m);

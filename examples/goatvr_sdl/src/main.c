@@ -284,6 +284,8 @@ static void reshape(int x, int y)
 	width = x;
 	height = y;
 
+	glViewport(0, 0, x, y);
+
 	goatvr_set_fb_size(x, y, 1.0);
 }
 

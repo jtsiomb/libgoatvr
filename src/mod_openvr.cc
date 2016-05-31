@@ -302,12 +302,12 @@ void ModuleOpenVR::draw_mirror()
 	glPopAttrib();
 }
 
-Mat4 ModuleOpenVR::get_view_matrix(int eye)
+Mat4 ModuleOpenVR::get_view_matrix(int eye) const
 {
 	return eye_inv_xform[eye];
 }
 
-Mat4 ModuleOpenVR::get_proj_matrix(int eye, float znear, float zfar)
+Mat4 ModuleOpenVR::get_proj_matrix(int eye, float znear, float zfar) const
 {
 	EVREye openvr_eye = eye == GOATVR_LEFT ? Eye_Left : Eye_Right;
 	return openvr_matrix4(vr->GetProjectionMatrix(openvr_eye, znear, zfar, API_OpenGL));

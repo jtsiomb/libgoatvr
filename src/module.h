@@ -87,8 +87,8 @@ public:
 	// should the user do buffer-swaps on their window?
 	virtual bool should_swap() const;
 
-	virtual Mat4 get_view_matrix(int eye);
-	virtual Mat4 get_proj_matrix(int eye, float znear, float zfar);
+	virtual Mat4 get_view_matrix(int eye) const;
+	virtual Mat4 get_proj_matrix(int eye, float znear, float zfar) const;
 
 	void print_info(const char *fmt, ...) const;
 	void print_error(const char *fmt, ...) const;

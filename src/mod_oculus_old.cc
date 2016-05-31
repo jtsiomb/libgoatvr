@@ -308,12 +308,12 @@ bool ModuleOculusOld::should_swap() const
 	return false;
 }
 
-Mat4 ModuleOculusOld::get_view_matrix(int eye)
+Mat4 ModuleOculusOld::get_view_matrix(int eye) const
 {
 	return eye_inv_xform[eye];
 }
 
-Mat4 ModuleOculusOld::get_proj_matrix(int eye, float znear, float zfar)
+Mat4 ModuleOculusOld::get_proj_matrix(int eye, float znear, float zfar) const
 {
 	return ovr_matrix(ovrMatrix4f_Projection(ovr_rdesc[eye].Fov, znear, zfar,
 			ovrProjection_RightHanded | ovrProjection_ClipRangeOpenGL));

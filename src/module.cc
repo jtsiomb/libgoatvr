@@ -131,12 +131,12 @@ bool Module::should_swap() const
 	return true;
 }
 
-Mat4 Module::get_view_matrix(int eye)
+Mat4 Module::get_view_matrix(int eye) const
 {
 	return Mat4::identity;
 }
 
-Mat4 Module::get_proj_matrix(int eye, float znear, float zfar)
+Mat4 Module::get_proj_matrix(int eye, float znear, float zfar) const
 {
 	return Mat4::identity;
 }
