@@ -18,9 +18,6 @@ endif()
 option(mod_oculus "Build Oculus SDK module" ${mod_oculus_default})
 option(mod_openvr "Build Valve OpenVR module" ON)
 option(mod_oculus_old "Build old Oculus SDK 0.5 module" ${mod_oculus_old_default})
-# TODO
-#option(mod_spaceball "Build spaceball module" OFF)
-#option(mod_glstereo "Build stereoscopic OpenGL module" ON)
 
 set(SO_MAJOR 1)
 set(SO_MINOR 1)
