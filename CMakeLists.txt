@@ -5,6 +5,8 @@ include(GNUInstallDirs)
 
 find_package(OpenGL)
 
+option(build_examples "Build example programs" ON)
+
 if(WIN32)
 	set(mod_oculus_default ON)
 	set(mod_oculus_old_default OFF)
@@ -91,4 +93,6 @@ install(TARGETS goatvr-static
 
 install(FILES ${pubhdr} DESTINATION include)
 
-add_subdirectory(examples/goatvr_sdl)
+if(build_examples)
+	add_subdirectory(examples/goatvr_sdl)
+endif()

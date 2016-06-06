@@ -34,7 +34,7 @@ Before building libgoatvr you first need to build and install the `gph-math`
 library, which can be obtained from: https://github.com/jtsiomb/gph-math
 
 The first time you build libgoatvr, and also every time you add a new module to
-the library, you need to run the configure script (or batch file on windows) on
+the library, you need to run the configure script (or batch file on windows) in
 the root directory of the project.
 
 libgoatvr uses cmake to generate build files for any system and compiler. To
