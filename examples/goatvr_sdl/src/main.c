@@ -1,4 +1,11 @@
+/* simple first person libgoatvr example program.
+ * look for functions starting with the goatvr_ prefix, to see how to use
+ * libgoatvr in the context of a simple VR program. All the calls to goatvr
+ * are commented to explain their purpose and usage. Please also refer to
+ * the comments in "goatvr.h" for more details.
+ */
 #include <stdio.h>
+#include <math.h>
 #include <assert.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
@@ -12,8 +19,7 @@ static void draw_box(float xsz, float ysz, float zsz, float norm_sign);
 static void reshape(int x, int y);
 static void handle_event(SDL_Event *ev);
 static void handle_key(int key, int press);
-static void handle_mouse_button(int bn, int st, int x, int y);
-static void handle_mouse_motion(int x, int y);
+static void handle_relative_mouse_motion(int dx, int dy);
 static unsigned int gen_chess_tex(float r0, float g0, float b0, float r1, float g1, float b1);
 
 static SDL_Window *win;
@@ -28,6 +34,9 @@ static float cam_pos[3];
 static float cam_theta, cam_phi;
 static unsigned int start_time;
 static int keystate[256];
+
+static int use_mouselook = 1;
+
 
 int main(int argc, char **argv)
 {
@@ -83,11 +92,26 @@ static int init(void)
 
 	chess_tex = gen_chess_tex(1.0, 0.7, 0.4, 0.4, 0.7, 1.0);
 
+	/* initialize goatvr and start VR mode */
 	if(goatvr_init() == -1) {
 		return -1;
 	}
+	/* GOATVR_HEAD means HMD-relative tracking, which is best for seated programs,
+	 * the other option being GOATVR_FLOOR, for floor-referenced HMD position,
+	 * which is best for standing programs.
+	 */
+	goatvr_set_origin_mode(GOATVR_HEAD);
 	goatvr_startvr();
+	/* NOTE: this is important. goatvr_should_swap tells us if the current VR module
+	 * leaves backbuffer swapping to us (and we should call SDL_GL_SwapWindow) or
+	 * handles the swapchain itself.
+	 */
 	should_swap = goatvr_should_swap();
+
+	if(use_mouselook) {
+		SDL_SetRelativeMouseMode(1);
+		SDL_SetWindowGrab(win, 1);
+	}
 
 	start_time = SDL_GetTicks();
 	return 0;
@@ -141,25 +165,42 @@ static void draw(void)
 
 	update(dt);
 
+	/* we must call goatvr_draw_start before we start drawing in VR */
 	goatvr_draw_start();
 	glClearColor(0.4, 0.14, 0.1, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	for(i=0; i<2; i++) {
+		/* before drawing the view from each eye, we need to call goatvr_draw_eye
+		 * to let goatvr know which eye's view we are about to draw.
+		 */
 		goatvr_draw_eye(i);
 
 		glMatrixMode(GL_PROJECTION);
+		/* goatvr_projection_matrix returns a pointer to the projection matrix
+		 * for a particular eye. The arguments are the eye index, the near clipping
+		 * plane distance, and the far clipping plane distance.
+		 */
 		glLoadMatrixf(goatvr_projection_matrix(i, 0.5, 500.0));
+
 		glMatrixMode(GL_MODELVIEW);
+		/* goatvr_view_matrix gives us the view matrix (inverse transformation)
+		 * for a particular eye. This matrix contains stereo separation, and
+		 * head-tracking (if supported by the current VR module).
+		 */
 		glLoadMatrixf(goatvr_view_matrix(i));
 		glRotatef(cam_phi, 1, 0, 0);
 		glRotatef(cam_theta, 0, 1, 0);
-		glTranslatef(-cam_pos[0], -cam_pos[1], -cam_pos[2]);
+		glTranslatef(-cam_pos[0], -cam_pos[1] - goatvr_get_eye_height(), -cam_pos[2]);
 
 		draw_scene();
 	}
+	/* when we're done drawing both eyes, call goatvr_draw_done */
 	goatvr_draw_done();
 
+	/* Swap buffers if the current VR module doesn't handle the swappign itself.
+	 * We called goatvr_should_swap() to determine that. See comment in init() above.
+	 */
 	if(should_swap) {
 		SDL_GL_SwapWindow(win);
 	}
@@ -287,6 +328,13 @@ static void reshape(int x, int y)
 
 	glViewport(0, 0, x, y);
 
+	/* At least once in the beginning, and every time the output is resized,
+	 * we should call goatvr_set_fb_size. Not strictly necessary for all VR
+	 * modules, but good practice to avoid surprises.
+	 * Last argument is the render buffer resolution scaling factor. Use lower
+	 * values to trade off quality for speed, or higher values to trade off
+	 * speed for quality.
+	 */
 	goatvr_set_fb_size(x, y, 1.0);
 }
 
@@ -311,17 +359,10 @@ static void handle_event(SDL_Event *ev)
 		}
 		break;
 
-	case SDL_MOUSEBUTTONDOWN:
-	case SDL_MOUSEBUTTONUP:
-		{
-			int bn = ev->button.button - SDL_BUTTON_LEFT;
-			handle_mouse_button(bn, ev->button.state == SDL_PRESSED ? 1 : 0,
-					ev->button.x, ev->button.y);
-		}
-		break;
-
 	case SDL_MOUSEMOTION:
-		handle_mouse_motion(ev->motion.x, ev->motion.y);
+		if(use_mouselook) {
+			handle_relative_mouse_motion(ev->motion.xrel, ev->motion.yrel);
+		}
 		break;
 	}
 }
@@ -343,39 +384,26 @@ static void handle_key(int key, int press)
 			break;
 
 		case '`':
-			if(goatvr_get_origin_mode() == GOATVR_FLOOR) {
-				goatvr_set_origin_mode(GOATVR_HEAD);
-				printf("switching to head origin\n");
-			} else {
-				goatvr_set_origin_mode(GOATVR_FLOOR);
-				printf("switching to floor origin\n");
-			}
+			use_mouselook = SDL_GetRelativeMouseMode() ? 0 : 1;
+			printf("%s the mouse\n", use_mouselook ? "grabbing" : "releasing");
+			SDL_SetRelativeMouseMode(use_mouselook);
+			SDL_SetWindowGrab(win, use_mouselook);
 			break;
 		}
 	}
 }
 
-static int prev_x, prev_y;
-static int bnstate[32];
-
-static void handle_mouse_button(int bn, int st, int x, int y)
+static void handle_relative_mouse_motion(int dx, int dy)
 {
-	bnstate[bn] = st;
-	prev_x = x;
-	prev_y = y;
-}
-
-static void handle_mouse_motion(int x, int y)
-{
-	int dx = x - prev_x;
-	int dy = y - prev_y;
-	prev_x = x;
-	prev_y = y;
-
 	if(!dx && !dy) return;
 
-	if(bnstate[0]) {
-		cam_theta += dx * 0.5;
+	cam_theta += dx * 0.5;
+
+	/* if the current VR module supports head-tracking, then it's best to
+	 * leave camera elevation strictly to the user's head motion. Otherwise
+	 * go into full mouselook mode.
+	 */
+	if(!goatvr_have_headtracking()) {
 		cam_phi += dy * 0.5;
 
 		if(cam_phi < -90) cam_phi = -90;
