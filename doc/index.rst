@@ -18,7 +18,9 @@ split into the following sections:
  2. `Head tracking`_
  3. Rendering_
  4. options and properties
+ 5. `Environment variables`_
 
 .. _Initialization: 1-init.html
 .. _`Head tracking`: 2-tracking.html
 .. _Rendering: 3-rendering.html
+.. _`Environment variables: envvars.html
