@@ -231,7 +231,7 @@ void ModuleOculusOld::update()
 		eye_pos[i] = Vec3(pos.x, pos.y, pos.z);
 		eye_rot[i] = Quat(rot.x, rot.y, rot.z, rot.w);
 
-		Mat4 rmat = eye_rot[i].calc_matrix();
+		Mat4 rmat = transpose(eye_rot[i].calc_matrix());
 		Mat4 tmat;
 		tmat.translation(-eye_pos[i]);
 		if(origin_mode == GOATVR_FLOOR) {
