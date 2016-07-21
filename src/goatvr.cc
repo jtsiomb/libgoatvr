@@ -362,6 +362,52 @@ int goatvr_should_swap()
 	return user_swap ? 1 : 0;
 }
 
+// ---- input device handling ----
+int goatvr_num_devices(void)
+{
+	return 0;	// TODO
+}
+
+goatvr_device *goatvr_get_device(int idx)
+{
+	return 0;	// TODO
+}
+
+const char *goatvr_device_name(goatvr_device *dev)
+{
+	return 0;	// TODO
+}
+
+int goatvr_device_spatial(goatvr_device *dev)
+{
+	return -1;	// TODO
+}
+
+int goatvr_device_num_axes(goatvr_device *dev)
+{
+	return 0;	// TODO
+}
+
+int goatvr_device_num_buttons(goatvr_device *dev)
+{
+	return 0;	// TODO
+}
+
+void goatvr_device_position(goatvr_device *dev, float *pos)
+{
+	// TODO
+}
+
+void goatvr_device_orientation(goatvr_device *dev, float *quat)
+{
+	// TODO
+}
+
+float *goatvr_device_matrix(goatvr_device *dev)
+{
+	return 0;	// TODO
+}
+
 // ---- module management ----
 
 int goatvr_activate_module(goatvr_module *vrmod)

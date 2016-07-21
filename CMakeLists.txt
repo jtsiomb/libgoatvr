@@ -29,12 +29,13 @@ file(GLOB pubhdr "include/*.h")
 # this will generate a file called reg_modules.cc which we'll add to the build
 if(WIN32)
 	execute_process(COMMAND configure.bat WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+	set(def libgoatvr.def)
 else()
 	execute_process(COMMAND ./configure WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 endif()
 list(APPEND src reg_modules.cc)
 
-add_library(goatvr SHARED ${src} ${hdr} ${pubhdr})
+add_library(goatvr SHARED ${src} ${def} ${hdr} ${pubhdr})
 add_library(goatvr-static STATIC ${src} ${hdr} ${pubhdr})
 
 set_target_properties(goatvr PROPERTIES VERSION ${SO_MAJOR}.${SO_MINOR})
