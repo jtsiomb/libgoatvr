@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif	/* WIN32 */
 
 #ifdef __APPLE__
+#define GL_GLEXT_LEGACY
 #include <OpenGL/gl.h>
 #else
 #define GL_GLEXT_PROTOTYPES 1
@@ -51,9 +52,12 @@ typedef void (GLAPI *GLUseProgramFunc)(GLuint prog);
 extern GLUseProgramFunc glUseProgram;
 #endif	// !GL_VERSION_2_0
 
+#ifndef GL_DEPTH_COMPONENT24
+#define GL_DEPTH_COMPONENT24	0x81a6
+#endif
+
 #ifndef GL_VERSION_3_0
 /* ARB_framebuffer_object / EXT_framebuffer_object */
-#define GL_DEPTH_COMPONENT24	0x81a6
 #define GL_FRAMEBUFFER			0x8d40
 #define GL_RENDERBUFFER			0x8d41
 #define GL_COLOR_ATTACHMENT0	0x8ce0

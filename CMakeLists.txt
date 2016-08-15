@@ -38,6 +38,9 @@ list(APPEND src reg_modules.cc)
 add_library(goatvr SHARED ${src} ${def} ${hdr} ${pubhdr})
 add_library(goatvr-static STATIC ${src} ${hdr} ${pubhdr})
 
+set_target_properties(goatvr PROPERTIES CXX_STANDARD 11)
+set_target_properties(goatvr-static PROPERTIES CXX_STANDARD 11)
+
 set_target_properties(goatvr PROPERTIES VERSION ${SO_MAJOR}.${SO_MINOR})
 set_target_properties(goatvr PROPERTIES SOVERSION ${SO_MAJOR})
 
@@ -54,6 +57,8 @@ endif()
 target_include_directories(goatvr PUBLIC include)
 target_include_directories(goatvr-static PUBLIC include)
 
+include_directories(/usr/local/include)
+
 find_library(gmath_lib NAMES gmath libgmath)
 #if(WIN32)
 #	set(gmath_lib libgmath)
@@ -68,8 +73,6 @@ endif()
 if(mod_openvr)
 	add_definitions(-DUSE_MOD_OPENVR)
 	list(APPEND mod_libs openvr_api)
-	set_target_properties(goatvr PROPERTIES CXX_STANDARD 11)
-	set_target_properties(goatvr-static PROPERTIES CXX_STANDARD 11)
 endif()
 if(mod_oculus_old)
 	add_definitions(-DUSE_MOD_OCULUS_OLD)
