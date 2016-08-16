@@ -35,8 +35,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif	/* WIN32 */
 
 #ifdef __APPLE__
-#define GL_GLEXT_LEGACY
 #include <OpenGL/gl.h>
+
+/* define all GL versions we need, to let us use the functions directly */
+#ifndef GL_VERSION_3_0
+#define GL_VERSION_3_0 1
+#endif
+
 #else
 #define GL_GLEXT_PROTOTYPES 1
 #include <GL/gl.h>

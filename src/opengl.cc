@@ -18,8 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>
 #include "opengl.h"
 
+#ifndef __APPLE__
 typedef int (*glfunc_type)();
 static glfunc_type load_glext(const char *name);
+#endif
 
 namespace goatvr {
 
@@ -83,12 +85,5 @@ glfunc_type load_glext(const char *name)
 glfunc_type load_glext(const char *name)
 {
 	return (glfunc_type)glXGetProcAddress((unsigned char*)name);
-}
-
-#else
-
-glfunc_type load_glext(const char *name)
-{
-	return 0;
 }
 #endif
