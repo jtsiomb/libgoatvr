@@ -47,8 +47,10 @@ static int fbo_width, fbo_height;
 static bool user_swap = true;
 
 // user information
-static float user_eye_height = 1.65;
+static float user_eye_height = 1.65f;
 static goatvr_user_gender user_gender = GOATVR_USER_UNKNOWN;
+
+static float units_scale = 1.0f;
 
 extern "C" {
 
@@ -185,6 +187,16 @@ int goatvr_have_headtracking()
 	return 0;	// TODO allow other devices to be bound as head-trackers
 }
 
+void goatvr_set_units_scale(float us)
+{
+	units_scale = us;
+}
+
+float goatvr_get_units_scale(void)
+{
+	return units_scale;
+}
+
 // ---- rendering ----
 
 void goatvr_set_fb_size(int width, int height, float scale)
@@ -289,6 +301,7 @@ int goatvr_get_fb_texture_height()
 
 unsigned int goatvr_get_fbo(void)
 {
+	update_fbo();
 	return fbo;
 }
 
@@ -456,7 +469,7 @@ int goatvr_module_usable(goatvr_module *vrmod)
 
 float goatvr_get_eye_height()
 {
-	return user_eye_height;
+	return user_eye_height * units_scale;
 }
 
 goatvr_user_gender goatvr_get_user_gender()
@@ -485,7 +498,7 @@ int goatvr_util_invert_matrix(float *inv, const float *mat)
 
 void goatvr::set_user_eye_height(float height)
 {
-	user_eye_height = height;
+	user_eye_height = height / units_scale;
 }
 
 void goatvr::set_user_gender(goatvr_user_gender gender)

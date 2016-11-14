@@ -87,12 +87,13 @@ void ModuleSBS::set_fbsize(int width, int height, float fbscale)
 Mat4 ModuleSBS::get_view_matrix(int eye) const
 {
 	float eye_offs[] = {0.5f * ipd, -0.5f * ipd};
+	float units_scale = goatvr_get_units_scale();
 
 	Mat4 xform;
 
-	xform.translation(eye_offs[eye], 0, 0);
+	xform.translation(eye_offs[eye] * units_scale, 0, 0);
 	if(origin_mode == GOATVR_FLOOR) {
-		xform.translate(0, -1.65, 0);
+		xform.translate(0, -1.65 * units_scale, 0);
 	}
 	return xform;
 }

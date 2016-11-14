@@ -73,6 +73,9 @@ void goatvr_recenter(void);
  */
 int goatvr_have_headtracking(void);
 
+void goatvr_set_units_scale(float us);
+float goatvr_get_units_scale(void);
+
 /* ---- rendering ---- */
 void goatvr_set_fb_size(int width, int height, float scale);
 float goatvr_get_fb_scale(void);
