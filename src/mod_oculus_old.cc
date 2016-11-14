@@ -169,7 +169,7 @@ void ModuleOculusOld::start()
 	unsigned int hmd_caps = ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction;
 	ovrHmd_SetEnabledCaps(hmd, hmd_caps);
 	// configure SDK-rendering and enable display overdrive and timewarp
-	unsigned int distort_caps = ovrDistortionCap_TimeWarp | ovrDistortionCap_Overdrive;
+	unsigned int distort_caps = ovrDistortionCap_TimeWarp | ovrDistortionCap_Overdrive | ovrDistortionCap_SRGB;
 #ifdef OVR_OS_LINUX
 	if(!fakehmd) {
 		distort_caps |= ovrDistortionCap_LinuxDevFullscreen;
@@ -216,6 +216,7 @@ bool ModuleOculusOld::have_headtracking() const
 
 void ModuleOculusOld::update()
 {
+	float units_scale = goatvr_get_units_scale();
 	ovrVector3f eye_offs[2] = {
 		ovr_rdesc[0].HmdToEyeViewOffset,
 		ovr_rdesc[1].HmdToEyeViewOffset
@@ -228,14 +229,14 @@ void ModuleOculusOld::update()
 		ovrVector3f pos = ovr_poses[i].Position;
 		ovrQuatf rot = ovr_poses[i].Orientation;
 
-		eye_pos[i] = Vec3(pos.x, pos.y, pos.z);
+		eye_pos[i] = Vec3(pos.x, pos.y, pos.z) * units_scale;
 		eye_rot[i] = Quat(rot.x, rot.y, rot.z, rot.w);
 
 		Mat4 rmat = transpose(eye_rot[i].calc_matrix());
 		Mat4 tmat;
 		tmat.translation(-eye_pos[i]);
 		if(origin_mode == GOATVR_FLOOR) {
-			tmat.translate(0, -eye_height, 0);
+			tmat.translate(0, -eye_height * units_scale, 0);
 		}
 		eye_inv_xform[i] = tmat * rmat;
 
