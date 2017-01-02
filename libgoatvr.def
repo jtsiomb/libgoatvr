@@ -10,6 +10,8 @@ EXPORTS
 	goatvr_get_origin_mode
 	goatvr_recenter
 	goatvr_have_headtracking
+	goatvr_set_units_scale
+	goatvr_get_units_scale
 	goatvr_set_fb_size
 	goatvr_get_fb_scale
 	goatvr_get_fb_width
