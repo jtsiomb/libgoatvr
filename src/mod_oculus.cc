@@ -148,6 +148,7 @@ bool ModuleOculus::have_headtracking() const
 
 void ModuleOculus::update()
 {
+	float units_scale = goatvr_get_units_scale();
 	ovrVector3f eye_offs[2] = { rdesc[0].HmdToEyeOffset, rdesc[1].HmdToEyeOffset };
 
 	double tm = ovr_GetPredictedDisplayTime(ovr, 0);
@@ -158,7 +159,7 @@ void ModuleOculus::update()
 		ovrVector3f pos = ovr_layer.RenderPose[i].Position;
 		ovrQuatf rot = ovr_layer.RenderPose[i].Orientation;
 
-		eye_pos[i] = Vec3(pos.x, pos.y, pos.z);
+		eye_pos[i] = Vec3(pos.x, pos.y, pos.z) * units_scale;
 		eye_rot[i] = Quat(rot.x, rot.y, rot.z, rot.w);
 
 		Mat4 rmat = eye_rot[i].calc_matrix();
@@ -292,8 +293,12 @@ void ModuleOculus::draw_done()
 {
 	ovr_CommitTextureSwapChain(ovr, ovr_rtex);
 
+	ovrViewScaleDesc scale_desc;
+	scale_desc.HmdSpaceToWorldScaleInMeters = goatvr_get_units_scale();
+	scale_desc.HmdToEyeOffset[0] = rdesc[0].HmdToEyeOffset;
+	scale_desc.HmdToEyeOffset[1] = rdesc[1].HmdToEyeOffset;
 	ovrLayerHeader *layers = &ovr_layer.Header;
-	ovrResult res = ovr_SubmitFrame(ovr, 0, 0, &layers, 1);
+	ovrResult res = ovr_SubmitFrame(ovr, 0, &scale_desc, &layers, 1);
 	switch(res) {
 	case ovrSuccess_NotVisible:
 		print_info("lost HMD ownership\n");
@@ -346,6 +351,11 @@ void ModuleOculus::draw_mirror()
 	glPopMatrix();
 
 	glPopAttrib();
+}
+
+bool ModuleOculus::should_swap() const
+{
+	return false;
 }
 
 Mat4 ModuleOculus::get_view_matrix(int eye) const

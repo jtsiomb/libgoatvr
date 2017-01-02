@@ -9,3 +9,4 @@ Debug/
 *.dll
 *.lib
 reg_modules.cc
+*.log

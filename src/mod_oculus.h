@@ -76,6 +76,8 @@ public:
 	void draw_done();
 	void draw_mirror();
 
+	bool should_swap() const;
+
 	Mat4 get_view_matrix(int eye) const;
 	Mat4 get_proj_matrix(int eye, float znear, float zfar) const;
 };
