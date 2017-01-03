@@ -57,6 +57,6 @@ void RenderTexture::update(int xsz, int ysz)
 
 		printf("goatvr: creating %dx%d texture for %dx%d framebuffer\n", tex_width, tex_height, xsz, ysz);
 		glBindTexture(GL_TEXTURE_2D, tex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex_width, tex_height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, tex_width, tex_height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 	}
 }
