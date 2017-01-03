@@ -294,7 +294,7 @@ void ModuleOculus::draw_done()
 	ovr_CommitTextureSwapChain(ovr, ovr_rtex);
 
 	ovrViewScaleDesc scale_desc;
-	scale_desc.HmdSpaceToWorldScaleInMeters = goatvr_get_units_scale();
+	scale_desc.HmdSpaceToWorldScaleInMeters = 1.0 / goatvr_get_units_scale();
 	scale_desc.HmdToEyeOffset[0] = rdesc[0].HmdToEyeOffset;
 	scale_desc.HmdToEyeOffset[1] = rdesc[1].HmdToEyeOffset;
 	ovrLayerHeader *layers = &ovr_layer.Header;
