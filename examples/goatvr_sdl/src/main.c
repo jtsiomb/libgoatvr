@@ -37,6 +37,8 @@ static int keystate[256];
 
 static int use_mouselook = 1;
 
+static int num_inp_dev;
+
 
 int main(int argc, char **argv)
 {
@@ -82,6 +84,8 @@ quit:
 
 static int init(void)
 {
+	int i;
+
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glGetError();	// ignore error if we don't have the extension
 	glEnable(GL_DEPTH_TEST);
@@ -107,6 +111,12 @@ static int init(void)
 	 * handles the swapchain itself.
 	 */
 	should_swap = goatvr_should_swap();
+
+	num_inp_dev = goatvr_num_sources();
+	printf("number of input sources: %d\n", num_inp_dev);
+	for(i=0; i<num_inp_dev; i++) {
+		printf(" [%d]: %s\n", i, goatvr_source_name(goatvr_get_source(i)));
+	}
 
 	if(use_mouselook) {
 		SDL_SetRelativeMouseMode(1);
@@ -209,6 +219,7 @@ static void draw(void)
 
 static void draw_scene()
 {
+	int i;
 	float grey[] = {0.8, 0.8, 0.8, 1};
 	float col[] = {0, 0, 0, 1};
 	float lpos[][4] = {
@@ -220,7 +231,7 @@ static void draw_scene()
 		{0.4, 0.3, 0.3, 1}
 	};
 
-	for(int i=0; i<2; i++) {
+	for(i=0; i<2; i++) {
 		glLightfv(GL_LIGHT0 + i, GL_POSITION, lpos[i]);
 		glLightfv(GL_LIGHT0 + i, GL_DIFFUSE, lcol[i]);
 	}
@@ -236,7 +247,7 @@ static void draw_scene()
 	glDisable(GL_TEXTURE_2D);
 	glPopMatrix();
 
-	for(int i=0; i<4; i++) {
+	for(i=0; i<4; i++) {
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, grey);
 		glPushMatrix();
 		glTranslatef(i & 1 ? 5 : -5, 1, i & 2 ? -5 : 5);
@@ -264,6 +275,16 @@ static void draw_scene()
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
 	draw_box(0.05, 1.2, 6, 1.0);
 	draw_box(6, 1.2, 0.05, 1.0);
+
+	/* draw tracking markers for all input devices with spatial tracking support */
+	for(i=0; i<num_inp_dev; i++) {
+		goatvr_source *dev = goatvr_get_source(i);
+		if(dev && goatvr_source_spatial(dev)) {
+			float pos[3];
+			goatvr_source_position(dev, pos);
+			printf("[%d] %s: %f %f %f\n", i, goatvr_source_name(dev), pos[0], pos[1], pos[2]);
+		}
+	}
 }
 
 static void draw_box(float xsz, float ysz, float zsz, float norm_sign)

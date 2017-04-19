@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace goatvr {
 
-class Device {
+class Source {
 	Module *module;	/* handled by module */
 	void *mod_dev;	/* module-internal device handle */
 

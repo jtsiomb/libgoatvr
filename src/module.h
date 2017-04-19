@@ -73,6 +73,9 @@ public:
 
 	virtual bool have_headtracking() const;
 
+	virtual int num_input_sources() const;
+	virtual Source *get_input_source(int idx) const;
+
 	virtual void update();
 
 	// rendering ops are only valid on rendering modules

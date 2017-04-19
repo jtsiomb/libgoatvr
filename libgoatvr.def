@@ -31,15 +31,15 @@ EXPORTS
 	goatvr_draw_eye
 	goatvr_draw_done
 	goatvr_should_swap
-	goatvr_num_devices
-	goatvr_get_device
-	goatvr_device_name
-	goatvr_device_spatial
-	goatvr_device_num_axes
-	goatvr_device_num_buttons
-	goatvr_device_position
-	goatvr_device_orientation
-	goatvr_device_matrix
+	goatvr_num_sources
+	goatvr_get_source
+	goatvr_source_name
+	goatvr_source_spatial
+	goatvr_source_num_axes
+	goatvr_source_num_buttons
+	goatvr_source_position
+	goatvr_source_orientation
+	goatvr_source_matrix
 	goatvr_activate_module
 	goatvr_deactivate_module
 	goatvr_num_modules

@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef LIBGOATVR_IMPL
 typedef void goatvr_module;
-typedef void goatvr_device;
+typedef void goatvr_source;
 #endif
 
 enum goatvr_origin_mode { GOATVR_FLOOR, GOATVR_HEAD };
@@ -124,21 +124,22 @@ void goatvr_draw_done(void);
  */
 int goatvr_should_swap(void);
 
-/* ---- input device handling ---- */
-int goatvr_num_devices(void);
-goatvr_device *goatvr_get_device(int idx);
+/* ---- input source handling ---- */
+int goatvr_num_sources(void);
+goatvr_source *goatvr_get_source(int idx);
 
-const char *goatvr_device_name(goatvr_device *dev);
-int goatvr_device_spatial(goatvr_device *dev);
-int goatvr_device_num_axes(goatvr_device *dev);
-int goatvr_device_num_buttons(goatvr_device *dev);
+const char *goatvr_source_name(goatvr_source *dev);
+/* returns non-zero if the input source provides spatial tracking information */
+int goatvr_source_spatial(goatvr_source *dev);
+int goatvr_source_num_axes(goatvr_source *dev);
+int goatvr_source_num_buttons(goatvr_source *dev);
 
 /* get the device position. expects an array of 3 floats */
-void goatvr_device_position(goatvr_device *dev, float *pos);
+void goatvr_source_position(goatvr_source *dev, float *pos);
 /* get the device orientation. expects an array of 4 floats (quaternion xyzw) */
-void goatvr_device_orientation(goatvr_device *dev, float *quat);
+void goatvr_source_orientation(goatvr_source *dev, float *quat);
 /* get the device transformation matrix (returns pointer to 16 floats opengl-order) */
-float *goatvr_device_matrix(goatvr_device *dev);
+float *goatvr_source_matrix(goatvr_source *dev);
 
 
 /* ---- module management ---- */

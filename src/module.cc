@@ -97,6 +97,16 @@ bool Module::have_headtracking() const
 	return false;
 }
 
+int Module::num_input_sources() const
+{
+	return 0; // TODO
+}
+
+Source *Module::get_input_source(int idx) const
+{
+	return 0; // TODO
+}
+
 void Module::update()
 {
 }

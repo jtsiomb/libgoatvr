@@ -23,12 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace goatvr {
 
 class Module;
-class Device;
+class Source;
 
 }
 
 typedef goatvr::Module goatvr_module;
-typedef goatvr::Device goatvr_device;
+typedef goatvr::Source goatvr_source;
 
 #define LIBGOATVR_IMPL
 #include "goatvr.h"

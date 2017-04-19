@@ -108,6 +108,8 @@ void ModuleOculus::start()
 
 	// force creation of the render target when start is called
 	get_render_texture();
+
+	// TODO populate device list
 }
 
 void ModuleOculus::stop()

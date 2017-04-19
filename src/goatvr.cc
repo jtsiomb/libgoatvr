@@ -376,47 +376,47 @@ int goatvr_should_swap()
 }
 
 // ---- input device handling ----
-int goatvr_num_devices(void)
+int goatvr_num_sources(void)
 {
 	return 0;	// TODO
 }
 
-goatvr_device *goatvr_get_device(int idx)
+goatvr_source *goatvr_get_source(int idx)
 {
 	return 0;	// TODO
 }
 
-const char *goatvr_device_name(goatvr_device *dev)
+const char *goatvr_source_name(goatvr_source *dev)
 {
 	return 0;	// TODO
 }
 
-int goatvr_device_spatial(goatvr_device *dev)
+int goatvr_source_spatial(goatvr_source *dev)
 {
 	return -1;	// TODO
 }
 
-int goatvr_device_num_axes(goatvr_device *dev)
+int goatvr_source_num_axes(goatvr_source *dev)
 {
 	return 0;	// TODO
 }
 
-int goatvr_device_num_buttons(goatvr_device *dev)
+int goatvr_source_num_buttons(goatvr_source *dev)
 {
 	return 0;	// TODO
 }
 
-void goatvr_device_position(goatvr_device *dev, float *pos)
+void goatvr_source_position(goatvr_source *dev, float *pos)
 {
 	// TODO
 }
 
-void goatvr_device_orientation(goatvr_device *dev, float *quat)
+void goatvr_source_orientation(goatvr_source *dev, float *quat)
 {
 	// TODO
 }
 
-float *goatvr_device_matrix(goatvr_device *dev)
+float *goatvr_source_matrix(goatvr_source *dev)
 {
 	return 0;	// TODO
 }

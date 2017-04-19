@@ -61,6 +61,10 @@ extern GLUseProgramFunc glUseProgram;
 #define GL_DEPTH_COMPONENT24	0x81a6
 #endif
 
+#ifndef GL_SRGB
+#define GL_SRGB 0x8c40
+#endif
+
 #ifndef GL_VERSION_3_0
 /* ARB_framebuffer_object / EXT_framebuffer_object */
 #define GL_FRAMEBUFFER			0x8d40
