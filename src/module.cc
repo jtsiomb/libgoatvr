@@ -99,12 +99,12 @@ bool Module::have_headtracking() const
 
 int Module::num_input_sources() const
 {
-	return 0; // TODO
+	return 0;
 }
 
 Source *Module::get_input_source(int idx) const
 {
-	return 0; // TODO
+	return 0;
 }
 
 void Module::update()

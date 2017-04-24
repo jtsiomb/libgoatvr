@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "opengl.h"
 #include "mod_oculus.h"
 #include "goatvr_impl.h"
+#include "source.h"
 
 REG_MODULE(oculus, ModuleOculus)
 
@@ -109,7 +110,14 @@ void ModuleOculus::start()
 	// force creation of the render target when start is called
 	get_render_texture();
 
-	// TODO populate device list
+	// At least the head-tracking source is always available
+	SrcOculus *inp_src = new SrcOculus(this);
+
+	unsigned int ctlmask = ovr_GetConnectedControllerTypes(ovr);
+	printf("ctlmask: %u\n", ctlmask);
+
+	if(ctlmask & ovrControllerType_Touch) {
+	}
 }
 
 void ModuleOculus::stop()
@@ -146,6 +154,16 @@ void ModuleOculus::recenter()
 bool ModuleOculus::have_headtracking() const
 {
 	return true;
+}
+
+int ModuleOculus::num_input_sources() const
+{
+	return 1; // TODO
+}
+
+Source *ModuleOculus::get_input_source(int idx) const
+{
+	return 0;
 }
 
 void ModuleOculus::update()

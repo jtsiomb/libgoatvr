@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <OVR_CAPI_GL.h>
 #include <gmath/gmath.h>
 #include "module.h"
+#include "source.h"
 
 namespace goatvr {
 
@@ -66,6 +67,9 @@ public:
 	void recenter();
 
 	bool have_headtracking() const;
+
+	int num_input_sources() const;
+	Source *get_input_source(int idx) const;
 
 	void update();
 

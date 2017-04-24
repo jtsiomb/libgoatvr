@@ -15,29 +15,32 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef DEVICE_H_
-#define DEVICE_H_
+#ifndef SOURCE_H_
+#define SOURCE_H_
 
 #include <gmath/gmath.h>
 #include "module.h"
 
-// TODO
-
 namespace goatvr {
 
 class Source {
+protected:
 	Module *module;	/* handled by module */
-	void *mod_dev;	/* module-internal device handle */
 
-	char *name;
-	int num_buttons, num_axes;
-	int is_spatial;
+public:
+	explicit Source(Module *mod = 0);
+	virtual ~Source();
 
-	gph::Vec3 pos;
-	gph::Quat rot;
-	gph::Mat4 matrix;
+	virtual const char *get_name() const;
+	virtual int get_num_buttons() const;
+	virtual int get_num_axes() const;
+	virtual bool is_spatial() const;
+
+	virtual Vec3 get_position() const;
+	virtual Quat get_rotation() const;
+	virtual Mat4 get_matrix() const;
 };
 
 }
 
-#endif	/* DEVICE_H_ */
+#endif	/* SOURCE_H_ */
