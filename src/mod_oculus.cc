@@ -22,7 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "opengl.h"
 #include "mod_oculus.h"
 #include "goatvr_impl.h"
-#include "source.h"
+
+struct SrcData {
+	char name[32];
+	ovrPosef pose;
+};
 
 REG_MODULE(oculus, ModuleOculus)
 
@@ -111,12 +115,29 @@ void ModuleOculus::start()
 	get_render_texture();
 
 	// At least the head-tracking source is always available
-	SrcOculus *inp_src = new SrcOculus(this);
+	Source *src = new Source;
+	SrcData *srcdata = new SrcData;
+	src->mod = this;
+	src->mod_data = srcdata;
+	strcpy(srcdata->name, "oculus-head");
+
+	inp_sources.push_back(src);
+	def_track_src[0] = track_src[0] = src;
 
 	unsigned int ctlmask = ovr_GetConnectedControllerTypes(ovr);
 	printf("ctlmask: %u\n", ctlmask);
 
 	if(ctlmask & ovrControllerType_Touch) {
+		for(int i=0; i<2; i++) {
+			src = new Source;
+			srcdata = new SrcData;
+			src->mod = this;
+			src->mod_data = srcdata;
+			strcpy(srcdata->name, i ? "oculus-rhand" : "oculus-lhand");
+
+			inp_sources.push_back(src);
+			def_track_src[i + 1] = track_src[i + 1] = src;
+		}
 	}
 }
 
@@ -151,19 +172,39 @@ void ModuleOculus::recenter()
 	}
 }
 
-bool ModuleOculus::have_headtracking() const
+const char *ModuleOculus::get_soure_name(void *sdata) const
+{
+	SrcData *sd = (SrcData*)sdata;
+	return sd->name;
+}
+
+bool ModuleOculus::is_source_spatial(void *sdata) const
 {
 	return true;
 }
 
-int ModuleOculus::num_input_sources() const
+int ModuleOculus::get_source_num_axes(void *sdata) const
 {
-	return 1; // TODO
+	return 0;	   // TODO
 }
 
-Source *ModuleOculus::get_input_source(int idx) const
+int ModuleOculus::get_source_num_buttons(void *sdata) const
 {
-	return 0;
+	return 0;	   // TODO
+}
+
+Vec3 ModuleOculus::get_source_pos(void *sdata) const
+{
+	SrcData *sd = (SrcData*)sdata;
+	ovrVector3f pos = sd->pose.Position;
+	return Vec3(pos.x, pos.y, pos.z);
+}
+
+Quat ModuleOculus::get_source_rot(void *sdata) const
+{
+	SrcData *sd = (SrcData*)sdata;
+	ovrQuatf rot = sd->pose.Orientation;
+	return Quat(rot.x, rot.y, rot.z, rot.w);
 }
 
 void ModuleOculus::update()
@@ -190,7 +231,7 @@ void ModuleOculus::update()
 		rmat.transpose();
 		tmat.translation(-eye_pos[i]);
 		eye_inv_xform[i] = tmat * rmat;
-	}
+	}/
 }
 
 void ModuleOculus::set_fbsize(int width, int height, float fbscale)

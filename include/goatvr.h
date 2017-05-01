@@ -72,6 +72,17 @@ void goatvr_recenter(void);
  * for stereo separation.
  */
 int goatvr_have_headtracking(void);
+/* returns true if the active module provides hand tracking */
+int goatvr_have_handtracking(void);
+
+/* bind any input source as head/hand tracker for the currently active module,
+ * or restore the default binding
+ */
+void goatvr_set_default_tracker(void);
+void goatvr_set_head_tracker(goatvr_source *s);
+void goatvr_set_hand_tracker(int idx, goatvr_source *s);
+goatvr_source *goatvr_get_head_tracker(void);
+goatvr_source *goatvr_get_hand_tracker(int idx);
 
 void goatvr_set_units_scale(float us);
 float goatvr_get_units_scale(void);

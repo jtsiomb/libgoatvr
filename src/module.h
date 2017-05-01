@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MODULE_H_
 #define MODULE_H_
 
+#include <vector>
 #include <gmath/gmath.h>
 #include "goatvr_impl.h"
 #include "rtex.h"
@@ -45,6 +46,9 @@ protected:
 	int prio;
 	bool avail, act;
 
+	Source *track_src[3], *def_track_src[3];
+	std::vector<Source*> inp_sources;
+
 public:
 	Module();
 	virtual ~Module();
@@ -71,10 +75,30 @@ public:
 	virtual void set_origin_mode(goatvr_origin_mode mode);
 	virtual void recenter();
 
-	virtual bool have_headtracking() const;
+	virtual bool have_head_tracking() const;
+	virtual bool have_hand_tracking() const;
 
 	virtual int num_input_sources() const;
 	virtual Source *get_input_source(int idx) const;
+
+	// cancels any custom head/hand input source assignments
+	virtual void set_default_sources();
+
+	// assign an input source for head tracking
+	virtual void set_head_source(Source *src);
+	virtual Source *get_head_source() const;
+
+	// assign an input source for hand tracking
+	virtual void set_hand_source(int idx, Source *src);
+	virtual Source *get_hand_source(int idx) const;
+
+	// access input source state
+	virtual const char *get_soure_name(void *sdata) const;
+	virtual bool is_source_spatial(void *sdata) const;
+	virtual int get_source_num_axes(void *sdata) const;
+	virtual int get_source_num_buttons(void *sdata) const;
+	virtual Vec3 get_source_pos(void *sdata) const;
+	virtual Quat get_source_rot(void *sdata) const;
 
 	virtual void update();
 

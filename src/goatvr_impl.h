@@ -19,11 +19,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define GOATVR_IMPL_H_
 
 #include <vector>
+#include <gmath/gmath.h>
 
 namespace goatvr {
 
 class Module;
-class Source;
+
+struct Source {
+	Module *mod;
+	void *mod_data;
+
+	Mat4 xform;	 // matrix for the spatial sources
+};
 
 }
 
@@ -37,6 +44,9 @@ namespace goatvr {
 
 void set_user_eye_height(float height);
 void set_user_gender(goatvr_user_gender gender);
+
+void add_source(Source *s);
+void remove_source(Source *s);
 
 unsigned int next_pow2(unsigned int x);
 

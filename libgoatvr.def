@@ -10,6 +10,12 @@ EXPORTS
 	goatvr_get_origin_mode
 	goatvr_recenter
 	goatvr_have_headtracking
+	goatvr_have_handtracking
+	goatvr_set_default_tracker
+	goatvr_set_head_tracker
+	goatvr_set_hand_tracker
+	goatvr_get_head_tracker
+	goatvr_get_hand_tracker
 	goatvr_set_units_scale
 	goatvr_get_units_scale
 	goatvr_set_fb_size

@@ -26,6 +26,10 @@ Module::Module()
 {
 	avail = act = false;
 	prio = 0;
+
+	for(int i=0; i<3; i++) {
+		track_src[i] = def_track_src[i] = 0;
+	}
 }
 
 Module::~Module()
@@ -39,6 +43,9 @@ bool Module::init()
 
 void Module::destroy()
 {
+	for(size_t i=0; i<inp_sources.size(); i++) {
+		delete inp_sources[i];
+	}
 }
 
 void Module::set_priority(int p)
@@ -92,19 +99,81 @@ void Module::recenter()
 {
 }
 
-bool Module::have_headtracking() const
+bool Module::have_head_tracking() const
 {
-	return false;
+	return get_head_source() != 0;
+}
+
+bool Module::have_hand_tracking() const
+{
+	return get_hand_source(0) != 0 || get_hand_source(1) != 0;
 }
 
 int Module::num_input_sources() const
 {
-	return 0;
+	return (int)inp_sources.size();
 }
 
 Source *Module::get_input_source(int idx) const
 {
+	return inp_sources[idx];
+}
+
+void Module::set_default_sources()
+{
+	for(int i=0; i<3; i++) {
+		track_src[i] = def_track_src[i];
+	}
+}
+
+void Module::set_head_source(Source *src)
+{
+	track_src[0] = src;
+}
+
+Source *Module::get_head_source() const
+{
+	return track_src[0];
+}
+
+void Module::set_hand_source(int idx, Source *src)
+{
+	track_src[idx + 1] = src;
+}
+
+Source *Module::get_hand_source(int idx) const
+{
+	return track_src[idx - 1];
+}
+
+const char *Module::get_soure_name(void *sdata) const
+{
+	return "unknown";
+}
+
+bool Module::is_source_spatial(void *sdata) const
+{
+	return false;
+}
+
+int Module::get_source_num_axes(void *sdata) const
+{
 	return 0;
+}
+
+int Module::get_source_num_buttons(void *sdata) const
+{
+	return 0;
+}
+
+Vec3 Module::get_source_pos(void *sdata) const
+{
+	return Vec3(0, 0, 0);
+}
+
+Quat Module::get_source_rot(void *sdata) const
+{
+	return Quat::identity;
 }
 
 void Module::update()

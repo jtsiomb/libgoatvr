@@ -66,10 +66,12 @@ public:
 	void set_origin_mode(goatvr_origin_mode mode);
 	void recenter();
 
-	bool have_headtracking() const;
-
-	int num_input_sources() const;
-	Source *get_input_source(int idx) const;
+	const char *get_soure_name(void *sdata) const;
+	bool is_source_spatial(void *sdata) const;
+	int get_source_num_axes(void *sdata) const;
+	int get_source_num_buttons(void *sdata) const;
+	Vec3 get_source_pos(void *sdata) const;
+	Quat get_source_rot(void *sdata) const;
 
 	void update();
 

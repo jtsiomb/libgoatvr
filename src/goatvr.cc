@@ -52,6 +52,8 @@ static goatvr_user_gender user_gender = GOATVR_USER_UNKNOWN;
 
 static float units_scale = 1.0f;
 
+static std::vector<Source*> sources;
+
 extern "C" {
 
 int goatvr_init()
@@ -182,9 +184,54 @@ void goatvr_recenter()
 int goatvr_have_headtracking()
 {
 	if(render_module) {
-		return render_module->have_headtracking();
+		return render_module->have_head_tracking();
 	}
-	return 0;	// TODO allow other devices to be bound as head-trackers
+	return 0;
+}
+
+int goatvr_have_handtracking()
+{
+	if(render_module) {
+		return render_module->have_hand_tracking();
+	}
+	return 0;
+}
+
+void goatvr_set_default_tracker(void)
+{
+	if(render_module) {
+		render_module->set_default_sources();
+	}
+}
+
+void goatvr_set_head_tracker(goatvr_source *s)
+{
+	if(render_module) {
+		render_module->set_head_source(s);
+	}
+}
+
+void goatvr_set_hand_tracker(int idx, goatvr_source *s)
+{
+	if(render_module) {
+		render_module->set_hand_source(idx, s);
+	}
+}
+
+goatvr_source *goatvr_get_head_tracker(void)
+{
+	if(render_module) {
+		return render_module->get_head_source();
+	}
+	return 0;
+}
+
+goatvr_source *goatvr_get_hand_tracker(int idx)
+{
+	if(render_module) {
+		return render_module->get_hand_source(idx);
+	}
+	return 0;
 }
 
 void goatvr_set_units_scale(float us)
@@ -378,47 +425,54 @@ int goatvr_should_swap()
 // ---- input device handling ----
 int goatvr_num_sources(void)
 {
-	return 0;	// TODO
+	return (int)sources.size();
 }
 
 goatvr_source *goatvr_get_source(int idx)
 {
-	return 0;	// TODO
+	return sources[idx];
 }
 
 const char *goatvr_source_name(goatvr_source *dev)
 {
-	return 0;	// TODO
+	return dev->mod->get_source_name(dev->mod_data);
 }
 
 int goatvr_source_spatial(goatvr_source *dev)
 {
-	return -1;	// TODO
+	dev->mod->is_source_spatial(dev->mod_data);
 }
 
 int goatvr_source_num_axes(goatvr_source *dev)
 {
-	return 0;	// TODO
+	dev->mod->get_source_num_axes(dev->mod_data);
 }
 
 int goatvr_source_num_buttons(goatvr_source *dev)
 {
-	return 0;	// TODO
+	dev->mod->get_source_num_buttons(dev->mod_data);
 }
 
 void goatvr_source_position(goatvr_source *dev, float *pos)
 {
-	// TODO
+	Vec3 p = dev->mod->get_source_pos(dev->mod_data);
+	pos[0] = p.x;
+	pos[1] = p.y;
+	pos[2] = p.z;
 }
 
 void goatvr_source_orientation(goatvr_source *dev, float *quat)
 {
-	// TODO
+	Quat q = dev->mod->get_source_rot(dev->mod_data);
+	quat[0] = q.x;
+	quat[1] = q.y;
+	quat[2] = q.z;
+	quat[3] = q.w;
 }
 
 float *goatvr_source_matrix(goatvr_source *dev)
 {
-	return 0;	// TODO
+	return dev->xform[0];
 }
 
 // ---- module management ----
