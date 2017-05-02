@@ -440,17 +440,17 @@ const char *goatvr_source_name(goatvr_source *dev)
 
 int goatvr_source_spatial(goatvr_source *dev)
 {
-	dev->mod->is_source_spatial(dev->mod_data);
+	return dev->mod->is_source_spatial(dev->mod_data);
 }
 
 int goatvr_source_num_axes(goatvr_source *dev)
 {
-	dev->mod->get_source_num_axes(dev->mod_data);
+	return dev->mod->get_source_num_axes(dev->mod_data);
 }
 
 int goatvr_source_num_buttons(goatvr_source *dev)
 {
-	dev->mod->get_source_num_buttons(dev->mod_data);
+	return dev->mod->get_source_num_buttons(dev->mod_data);
 }
 
 void goatvr_source_position(goatvr_source *dev, float *pos)
@@ -549,6 +549,22 @@ int goatvr_util_invert_matrix(float *inv, const float *mat)
 }
 
 }	// extern "C"
+
+void goatvr::add_source(Source *s)
+{
+	std::vector<Source*>::iterator it = std::find(sources.begin(), sources.end(), s);
+	if(it == sources.end()) {
+		sources.push_back(s);
+	}
+}
+
+void goatvr::remove_source(Source *s)
+{
+	std::vector<Source*>::iterator it = std::find(sources.begin(), sources.end(), s);
+	if(it != sources.end()) {
+		sources.erase(it);
+	}
+}
 
 void goatvr::set_user_eye_height(float height)
 {

@@ -146,7 +146,7 @@ Source *Module::get_hand_source(int idx) const
 	return track_src[idx - 1];
 }
 
-const char *Module::get_soure_name(void *sdata) const
+const char *Module::get_source_name(void *sdata) const
 {
 	return "unknown";
 }

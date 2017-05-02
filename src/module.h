@@ -93,7 +93,7 @@ public:
 	virtual Source *get_hand_source(int idx) const;
 
 	// access input source state
-	virtual const char *get_soure_name(void *sdata) const;
+	virtual const char *get_source_name(void *sdata) const;
 	virtual bool is_source_spatial(void *sdata) const;
 	virtual int get_source_num_axes(void *sdata) const;
 	virtual int get_source_num_buttons(void *sdata) const;

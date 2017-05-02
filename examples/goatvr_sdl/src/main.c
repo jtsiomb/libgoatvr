@@ -37,8 +37,8 @@ static int keystate[256];
 
 static int use_mouselook = 1;
 
-static int num_inp_dev;
-
+static int num_inp_src;
+static goatvr_source **inp_src;
 
 int main(int argc, char **argv)
 {
@@ -112,10 +112,14 @@ static int init(void)
 	 */
 	should_swap = goatvr_should_swap();
 
-	num_inp_dev = goatvr_num_sources();
-	printf("number of input sources: %d\n", num_inp_dev);
-	for(i=0; i<num_inp_dev; i++) {
-		printf(" [%d]: %s\n", i, goatvr_source_name(goatvr_get_source(i)));
+	num_inp_src = goatvr_num_sources();
+	inp_src = malloc(num_inp_src * sizeof *inp_src);
+	assert(inp_src);
+
+	printf("number of input sources: %d\n", num_inp_src);
+	for(i=0; i<num_inp_src; i++) {
+		inp_src[i] = goatvr_get_source(i);
+		printf(" [%d]: %s\n", i, goatvr_source_name(inp_src[i]));
 	}
 
 	if(use_mouselook) {
@@ -191,7 +195,7 @@ static void draw(void)
 		 * for a particular eye. The arguments are the eye index, the near clipping
 		 * plane distance, and the far clipping plane distance.
 		 */
-		glLoadMatrixf(goatvr_projection_matrix(i, 0.5, 500.0));
+		glLoadMatrixf(goatvr_projection_matrix(i, 0.05, 500.0));
 
 		glMatrixMode(GL_MODELVIEW);
 		/* goatvr_view_matrix gives us the view matrix (inverse transformation)
@@ -277,12 +281,27 @@ static void draw_scene()
 	draw_box(6, 1.2, 0.05, 1.0);
 
 	/* draw tracking markers for all input devices with spatial tracking support */
-	for(i=0; i<num_inp_dev; i++) {
-		goatvr_source *dev = goatvr_get_source(i);
-		if(dev && goatvr_source_spatial(dev)) {
-			float pos[3];
-			goatvr_source_position(dev, pos);
-			printf("[%d] %s: %f %f %f\n", i, goatvr_source_name(dev), pos[0], pos[1], pos[2]);
+	{
+		float mcol[][4] = {
+			{1, 0, 0, 1},
+			{0, 1, 0, 1},
+			{0, 0, 1, 1},
+			{1, 1, 0, 1},
+			{1, 0, 1, 1},
+			{0, 1, 1, 1}
+		};
+		for(i=1; i<num_inp_src; i++) {
+			goatvr_source *src = goatvr_get_source(i);
+			if(src && goatvr_source_spatial(src)) {
+				glPushMatrix();
+				glTranslatef(0, goatvr_get_eye_height(), 0);
+				glMultMatrixf(goatvr_source_matrix(src));
+
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mcol[i - 1]);
+				draw_box(0.02, 0.02, 0.02, 1.0);
+
+				glPopMatrix();
+			}
 		}
 	}
 }

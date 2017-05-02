@@ -25,7 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 struct SrcData {
 	char name[32];
-	ovrPosef pose;
+	bool valid;
+	Vec3 pos;
+	Quat rot;
 };
 
 REG_MODULE(oculus, ModuleOculus)
@@ -123,6 +125,7 @@ void ModuleOculus::start()
 
 	inp_sources.push_back(src);
 	def_track_src[0] = track_src[0] = src;
+	add_source(src);
 
 	unsigned int ctlmask = ovr_GetConnectedControllerTypes(ovr);
 	printf("ctlmask: %u\n", ctlmask);
@@ -134,9 +137,11 @@ void ModuleOculus::start()
 			src->mod = this;
 			src->mod_data = srcdata;
 			strcpy(srcdata->name, i ? "oculus-rhand" : "oculus-lhand");
+			srcdata->valid = false;
 
 			inp_sources.push_back(src);
 			def_track_src[i + 1] = track_src[i + 1] = src;
+			add_source(src);
 		}
 	}
 }
@@ -144,6 +149,15 @@ void ModuleOculus::start()
 void ModuleOculus::stop()
 {
 	if(!ovr) return;	// not started
+
+	for(int i=0; i<3; i++) {
+		if(def_track_src[i]) {
+			remove_source(def_track_src[i]);
+			delete def_track_src[i];
+			def_track_src[i] = track_src[i] = 0;
+		}
+	}
+	inp_sources.clear();
 
 	if(ovr_rtex) {
 		ovr_DestroyTextureSwapChain(ovr, ovr_rtex);
@@ -172,7 +186,7 @@ void ModuleOculus::recenter()
 	}
 }
 
-const char *ModuleOculus::get_soure_name(void *sdata) const
+const char *ModuleOculus::get_source_name(void *sdata) const
 {
 	SrcData *sd = (SrcData*)sdata;
 	return sd->name;
@@ -195,16 +209,29 @@ int ModuleOculus::get_source_num_buttons(void *sdata) const
 
 Vec3 ModuleOculus::get_source_pos(void *sdata) const
 {
-	SrcData *sd = (SrcData*)sdata;
-	ovrVector3f pos = sd->pose.Position;
-	return Vec3(pos.x, pos.y, pos.z);
+	return ((SrcData*)sdata)->pos;
 }
 
 Quat ModuleOculus::get_source_rot(void *sdata) const
 {
-	SrcData *sd = (SrcData*)sdata;
-	ovrQuatf rot = sd->pose.Orientation;
-	return Quat(rot.x, rot.y, rot.z, rot.w);
+	return ((SrcData*)sdata)->rot;
+}
+
+static inline void update_source(Source *src, const ovrPosef &pose, float units_scale)
+{
+	SrcData *sd = (SrcData*)src->mod_data;
+
+	ovrVector3f ovrpos = pose.Position;
+	ovrQuatf ovrrot = pose.Orientation;
+
+	sd->pos = Vec3(ovrpos.x, ovrpos.y, ovrpos.z) * units_scale;
+	sd->rot = Quat(ovrrot.x, ovrrot.y, ovrrot.z, ovrrot.w);
+
+	Mat4 rmat = sd->rot.calc_matrix();
+	Mat4 tmat;
+	tmat.translation(sd->pos);
+
+	src->xform = rmat * tmat;
 }
 
 void ModuleOculus::update()
@@ -215,6 +242,9 @@ void ModuleOculus::update()
 	double tm = ovr_GetPredictedDisplayTime(ovr, 0);
 	ovrTrackingState tstate = ovr_GetTrackingState(ovr, tm, ovrTrue);
 	ovr_CalcEyePoses(tstate.HeadPose.ThePose, eye_offs, ovr_layer.RenderPose);
+
+	// fill in the details for the head input source
+	update_source(def_track_src[0], tstate.HeadPose.ThePose, units_scale);
 
 	for(int i=0; i<2; i++) {
 		ovrVector3f pos = ovr_layer.RenderPose[i].Position;
@@ -231,7 +261,17 @@ void ModuleOculus::update()
 		rmat.transpose();
 		tmat.translation(-eye_pos[i]);
 		eye_inv_xform[i] = tmat * rmat;
-	}/
+
+		// also update hand tracking poses if available
+		if(def_track_src[i + 1]) {
+			SrcData *sd = (SrcData*)def_track_src[i + 1];
+
+			sd->valid = (tstate.HandStatusFlags[i] & ovrStatus_PositionTracked) != 0;
+			//if(sd->valid) {
+				update_source(def_track_src[i + 1], tstate.HandPoses[i].ThePose, units_scale);
+			//}
+		}
+	}
 }
 
 void ModuleOculus::set_fbsize(int width, int height, float fbscale)
@@ -362,7 +402,7 @@ void ModuleOculus::draw_done()
 	ovrResult res = ovr_SubmitFrame(ovr, 0, &scale_desc, &layers, 1);
 	switch(res) {
 	case ovrSuccess_NotVisible:
-		print_info("lost HMD ownership\n");
+		//print_info("lost HMD ownership\n");
 		// TODO notify the app about this to throttle down
 		break;
 

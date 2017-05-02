@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <OVR_CAPI_GL.h>
 #include <gmath/gmath.h>
 #include "module.h"
-#include "source.h"
 
 namespace goatvr {
 
@@ -66,7 +65,7 @@ public:
 	void set_origin_mode(goatvr_origin_mode mode);
 	void recenter();
 
-	const char *get_soure_name(void *sdata) const;
+	const char *get_source_name(void *sdata) const;
 	bool is_source_spatial(void *sdata) const;
 	int get_source_num_axes(void *sdata) const;
 	int get_source_num_buttons(void *sdata) const;
