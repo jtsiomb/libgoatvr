@@ -456,7 +456,7 @@ void ModuleOculus::draw_mirror()
 
 bool ModuleOculus::should_swap() const
 {
-	return false;
+	return true;
 }
 
 Mat4 ModuleOculus::get_view_matrix(int eye) const

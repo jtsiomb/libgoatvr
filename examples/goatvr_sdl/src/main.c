@@ -94,6 +94,10 @@ static int init(void)
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 
+	printf("OpenGL Renderer: %s\n", (char*)glGetString(GL_RENDERER));
+	printf("OpenGL vendor: %s\n", (char*)glGetString(GL_VENDOR));
+	printf("OpenGL Version: %s\n", (char*)glGetString(GL_VERSION));
+
 	chess_tex = gen_chess_tex(1.0, 0.7, 0.4, 0.4, 0.7, 1.0);
 
 	/* initialize goatvr and start VR mode */
