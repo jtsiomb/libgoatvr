@@ -16,6 +16,9 @@ Currently implemented VR modules:
  - `anaglyph`: Anaglyph (red-cyan) stereo
  - `stereo`: Quad-buffer stereo
 
+Other modules:
+ - `spaceball`: 6dof input source (uses libspnav)
+
 Code examples can be found under the `examples` directory.
 
 Git repo: https://github.com/jtsiomb/libgoatvr.git
