@@ -1,6 +1,6 @@
 /*
 GoatVR - a modular virtual reality abstraction library
-Copyright (C) 2014-2016  John Tsiombikas <nuclear@member.fsf.org>
+Copyright (C) 2014-2017  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -154,6 +154,7 @@ void ModuleOculus::stop()
 		if(def_track_src[i]) {
 			remove_source(def_track_src[i]);
 			delete def_track_src[i];
+			delete (SrcData*)def_track_src[i]->mod_data;
 			def_track_src[i] = track_src[i] = 0;
 		}
 	}
