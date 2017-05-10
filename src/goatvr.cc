@@ -21,10 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "opengl.h"
 #include "goatvr_impl.h"
 #include "modman.h"
-
-#ifdef _MSC_VER
-#define strcasecmp	stricmp
-#endif
+#include "autocfg.h"
 
 using namespace goatvr;
 
@@ -84,53 +81,8 @@ void goatvr_detect()
 	printf("goatvr: module detection running for %d total modules ...\n", get_num_modules());
 	detect();
 
-	char *rmod_env = getenv("GOATVR_MODULE");
-	if(rmod_env) {
-		printf("GOATVR_MODULE is set, looking for render module %s to activate.\n", rmod_env);
-	}
-
-	Module *rmod = 0;
-	int max_prio = -1;
-
-	printf("goatvr: detected %d usable modules:\n", get_num_usable_modules());
-	for(int i=0; i<get_num_modules(); i++) {
-		Module *m = get_module(i);
-		if(m->usable()) {
-			printf("  %s", m->get_name());
-			if(m->get_type() == MODULE_RENDERING) {
-				int p = m->get_priority();
-				printf(" (render module, priority: %d)\n", p);
-
-				if(rmod_env) {
-					// user asked for a specific module
-					if(strcasecmp(m->get_name(), rmod_env) == 0) {
-						rmod = m;
-					}
-				} else {
-					// otherwise go by priority
-					if(p > max_prio) {
-						rmod = m;
-						max_prio = p;
-					}
-				}
-
-			} else {
-				putchar('\n');
-				activate(m);	// activate all usable non-rendering modules
-			}
-		}
-	}
-
-	// only do the following if we haven't already activated a render module
-	if(!render_module) {
-		if(!rmod) {
-			printf("no usable render module found!\n");
-		} else {
-			// activate the highest priority render module
-			activate(rmod);
-			printf("activating rendering module: %s\n", rmod->get_name());
-		}
-	}
+	// automatic module selection and activation (in autocfg.cc)
+	activate_module();
 }
 
 void goatvr_startvr()
@@ -150,6 +102,11 @@ void goatvr_startvr()
 	render_module->set_origin_mode(origin_mode);
 
 	user_swap = render_module->should_swap();
+
+	/* configure initial tracking sources (if the render module doesn't provide tracking
+	 * or if the user requests it through an environment variable) (in autocfg.cc).
+	 */
+	configure_tracking();
 }
 
 void goatvr_stopvr()
@@ -434,6 +391,17 @@ goatvr_source *goatvr_get_source(int idx)
 	return sources[idx];
 }
 
+goatvr_source *goatvr_find_source(const char *name)
+{
+	int num = goatvr_num_sources();
+	for(int i=0; i<num; i++) {
+		if(strcasecmp(goatvr_source_name(sources[i]), name) == 0) {
+			return sources[i];
+		}
+	}
+	return 0;
+}
+
 const char *goatvr_source_name(goatvr_source *dev)
 {
 	return dev->mod->get_source_name(dev->mod_data);
@@ -588,6 +556,22 @@ unsigned int goatvr::next_pow2(unsigned int x)
 	return x + 1;
 }
 
+void goatvr::calc_matrix(Mat4 &mat, const Vec3 &pos, const Quat &rot)
+{
+	Mat4 rmat = rot.calc_matrix();
+	Mat4 tmat;
+	tmat.translation(pos);
+	mat = rmat * tmat;
+}
+
+void goatvr::calc_inv_matrix(Mat4 &mat, const Vec3 &pos, const Quat &rot)
+{
+	Mat4 rmat = rot.calc_matrix();
+	rmat.transpose();
+	Mat4 tmat;
+	tmat.translation(-pos);
+	mat = tmat * rmat;
+}
 
 static bool update_fbo()
 {

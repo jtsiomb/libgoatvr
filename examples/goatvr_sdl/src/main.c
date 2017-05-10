@@ -294,7 +294,7 @@ static void draw_scene()
 			{1, 0, 1, 1},
 			{0, 1, 1, 1}
 		};
-		for(i=1; i<num_inp_src; i++) {
+		for(i=0; i<num_inp_src; i++) {
 			goatvr_source *src = goatvr_get_source(i);
 			if(src && goatvr_source_spatial(src)) {
 				glPushMatrix();

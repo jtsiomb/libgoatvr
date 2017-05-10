@@ -33,10 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <windows.h>
 #endif
 
-#ifdef _MSC_VER
-#define strcasecmp	stricmp
-#endif
-
 
 REG_MODULE(oculus_old, ModuleOculusOld)
 

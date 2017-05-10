@@ -50,6 +50,13 @@ void remove_source(Source *s);
 
 unsigned int next_pow2(unsigned int x);
 
+void calc_matrix(Mat4 &mat, const Vec3 &pos, const Quat &rot);
+void calc_inv_matrix(Mat4 &mat, const Vec3 &pos, const Quat &rot);
+
 }
+
+#ifdef _MSC_VER
+#define strcasecmp	stricmp
+#endif
 
 #endif	/* GOATVR_IMPL_H_ */

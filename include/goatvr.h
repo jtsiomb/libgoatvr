@@ -1,6 +1,6 @@
 /*
 GoatVR - a modular virtual reality abstraction library
-Copyright (C) 2014-2016  John Tsiombikas <nuclear@member.fsf.org>
+Copyright (C) 2014-2017  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -28,9 +28,9 @@ enum goatvr_origin_mode { GOATVR_FLOOR, GOATVR_HEAD };
 enum { GOATVR_LEFT, GOATVR_RIGHT };
 
 enum {
-	GOATVR_DEV_HMD,
-	GOATVR_DEV_LEFT_HAND,
-	GOATVR_DEV_RIGHT_HAND
+	GOATVR_SRC_HMD,
+	GOATVR_SRC_LEFT_HAND,
+	GOATVR_SRC_RIGHT_HAND
 };
 
 enum goatvr_user_gender { GOATVR_USER_UNKNOWN, GOATVR_USER_MALE, GOATVR_USE_FEMALE };
@@ -76,7 +76,8 @@ int goatvr_have_headtracking(void);
 int goatvr_have_handtracking(void);
 
 /* bind any input source as head/hand tracker for the currently active module,
- * or restore the default binding
+ * or restore the default binding.
+ * These must be called while in VR mode (after startvr).
  */
 void goatvr_set_default_tracker(void);
 void goatvr_set_head_tracker(goatvr_source *s);
@@ -138,6 +139,7 @@ int goatvr_should_swap(void);
 /* ---- input source handling ---- */
 int goatvr_num_sources(void);
 goatvr_source *goatvr_get_source(int idx);
+goatvr_source *goatvr_find_source(const char *name);
 
 const char *goatvr_source_name(goatvr_source *dev);
 /* returns non-zero if the input source provides spatial tracking information */

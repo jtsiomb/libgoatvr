@@ -39,6 +39,7 @@ EXPORTS
 	goatvr_should_swap
 	goatvr_num_sources
 	goatvr_get_source
+	goatvr_find_source
 	goatvr_source_name
 	goatvr_source_spatial
 	goatvr_source_num_axes

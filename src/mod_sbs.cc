@@ -90,8 +90,9 @@ Mat4 ModuleSBS::get_view_matrix(int eye) const
 	float units_scale = goatvr_get_units_scale();
 
 	Mat4 xform;
+	xform = Module::get_view_matrix(eye);
+	xform.translate(eye_offs[eye] * units_scale, 0, 0);
 
-	xform.translation(eye_offs[eye] * units_scale, 0, 0);
 	if(origin_mode == GOATVR_FLOOR) {
 		xform.translate(0, -1.65 * units_scale, 0);
 	}

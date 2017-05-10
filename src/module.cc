@@ -143,7 +143,7 @@ void Module::set_hand_source(int idx, Source *src)
 
 Source *Module::get_hand_source(int idx) const
 {
-	return track_src[idx - 1];
+	return track_src[idx + 1];
 }
 
 const char *Module::get_source_name(void *sdata) const
@@ -212,7 +212,17 @@ bool Module::should_swap() const
 
 Mat4 Module::get_view_matrix(int eye) const
 {
-	return Mat4::identity;
+	Source *src = track_src[0];
+
+	if(!src) {
+		return Mat4::identity;
+	}
+
+	Mat4 mat;
+	Vec3 pos = src->mod->get_source_pos(src->mod_data) * goatvr_get_units_scale();
+	Quat rot = src->mod->get_source_rot(src->mod_data);
+	goatvr::calc_inv_matrix(mat, pos, rot);
+	return mat;
 }
 
 Mat4 Module::get_proj_matrix(int eye, float znear, float zfar) const
