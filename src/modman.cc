@@ -1,6 +1,6 @@
 /*
 GoatVR - a modular virtual reality abstraction library
-Copyright (C) 2014-2016  John Tsiombikas <nuclear@member.fsf.org>
+Copyright (C) 2014-2017  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -109,12 +109,14 @@ void detect()
 
 void activate(Module *m)
 {
-	// only allow a single active rendering module
-	if(render_module && m->get_type() == MODULE_RENDERING) {
-		deactivate(render_module);
+	if(m->get_type() == MODULE_RENDERING) {
+		// only allow a single active rendering module
+		if(render_module) {
+			deactivate(render_module);
+		}
+		render_module = m;
 	}
 	active.insert(m);
-	render_module = m;
 }
 
 void deactivate(Module *m)
