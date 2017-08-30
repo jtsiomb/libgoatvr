@@ -62,7 +62,8 @@ endif()
 target_include_directories(goatvr PUBLIC include)
 target_include_directories(goatvr-static PUBLIC include)
 
-include_directories(/usr/local/include)
+# XXX this screws up cross-compiling. do we need it?
+#include_directories(/usr/local/include)
 
 find_library(gmath_lib NAMES gmath libgmath)
 #if(WIN32)

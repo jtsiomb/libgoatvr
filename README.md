@@ -59,3 +59,13 @@ which of the optional modules you want to build. Try running `cmake-gui` or
 `ccmake` instead of `cmake` if you wish to see and change these options
 interactively. Otherwise just pass `-DOPTION=value` arguemnts to cmake; for
 instance: `cmake .. -DCMAKE_BUILD_TYPE=Release -Dmod_oculus_old=OFF`
+
+To cross-compile for windows on UNIX with the mingw-w64 compiler, try the
+following:
+
+    mkdir build-mingw
+    cd build-mingw
+    cmake -DCMAKE_TOOLCHAIN_FILE=../mingw-toolchain.cmake \
+        -DCMAKE_INSTALL_PREFIX=/usr/i686-w64-mingw32 ..
+    make
+    sudo make install
