@@ -238,7 +238,10 @@ static inline void update_source(Source *src, const ovrPosef &pose, float units_
 void ModuleOculus::update()
 {
 	float units_scale = goatvr_get_units_scale();
-	ovrVector3f eye_offs[2] = { rdesc[0].HmdToEyeOffset, rdesc[1].HmdToEyeOffset };
+	ovrPosef eye_offs[2] = {
+		rdesc[0].HmdToEyePose,
+		rdesc[1].HmdToEyePose
+	};
 
 	double tm = ovr_GetPredictedDisplayTime(ovr, 0);
 	ovrTrackingState tstate = ovr_GetTrackingState(ovr, tm, ovrTrue);
@@ -397,8 +400,8 @@ void ModuleOculus::draw_done()
 
 	ovrViewScaleDesc scale_desc;
 	scale_desc.HmdSpaceToWorldScaleInMeters = 1.0 / goatvr_get_units_scale();
-	scale_desc.HmdToEyeOffset[0] = rdesc[0].HmdToEyeOffset;
-	scale_desc.HmdToEyeOffset[1] = rdesc[1].HmdToEyeOffset;
+	scale_desc.HmdToEyePose[0] = rdesc[0].HmdToEyePose;
+	scale_desc.HmdToEyePose[1] = rdesc[1].HmdToEyePose;
 	ovrLayerHeader *layers = &ovr_layer.Header;
 	ovrResult res = ovr_SubmitFrame(ovr, 0, &scale_desc, &layers, 1);
 	switch(res) {
@@ -467,8 +470,8 @@ Mat4 ModuleOculus::get_view_matrix(int eye) const
 
 Mat4 ModuleOculus::get_proj_matrix(int eye, float znear, float zfar) const
 {
-	Mat4 m = *(Mat4*)&ovrMatrix4f_Projection(rdesc[eye].Fov, znear, zfar, ovrProjection_ClipRangeOpenGL);
-	return transpose(m);
+	ovrMatrix4f m = ovrMatrix4f_Projection(rdesc[eye].Fov, znear, zfar, ovrProjection_ClipRangeOpenGL);
+	return transpose(*(Mat4*)&m);
 }
 
 #else
