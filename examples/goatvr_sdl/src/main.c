@@ -276,7 +276,7 @@ static void draw_scene()
 		if(goatvr_hand_active(i)) {
 			float mcol[] = {0, 0, 0, 1};
 			mcol[0] = 1 - i;
-			mcol[3] = i;
+			mcol[2] = i;
 
 			glPushMatrix();
 			glTranslatef(0, goatvr_get_eye_height(), 0);
