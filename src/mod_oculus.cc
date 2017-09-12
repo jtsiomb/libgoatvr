@@ -88,11 +88,7 @@ bool ModuleOculus::detect()
 		return false;
 	}
 
-	unsigned int ctlmask = ovr_GetConnectedControllerTypes(ovr);
-	have_touch = ctlmask & ovrControllerType_Touch;
-
-	print_info("HMD found: %s - %s (%s hand tracking)\n", hmd.Manufacturer, hmd.ProductName,
-			have_touch ? "with" : "no");
+	print_info("HMD found: %s - %s\n", hmd.Manufacturer, hmd.ProductName);
 	avail = true;
 	return true;
 }
@@ -171,7 +167,7 @@ void ModuleOculus::update()
 		// also update hand tracking poses if available
 		if(have_touch) {
 			hand_valid[i] = (tstate.HandStatusFlags[i] & ovrStatus_PositionTracked) != 0;
-			update_tracking(eye + i, tstate.HandPoses[i].ThePose, units_scale);
+			update_tracking(hand + i, tstate.HandPoses[i].ThePose, units_scale);
 		}
 	}
 
