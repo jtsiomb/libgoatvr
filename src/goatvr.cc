@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "opengl.h"
 #include "goatvr_impl.h"
 #include "modman.h"
+#include "inpman.h"
 #include "autocfg.h"
 
 using namespace goatvr;
@@ -44,13 +45,14 @@ static int fbo_width, fbo_height;
 
 static bool user_swap = true;
 
+// gesture state for each hand
+static bool gesture[GOATVR_NUM_GESTURES][2];
+
 // user information
 static float user_eye_height = 1.65f;
 static goatvr_user_gender user_gender = GOATVR_USER_UNKNOWN;
 
 static float units_scale = 1.0f;
-
-static std::vector<Source*> sources;
 
 extern "C" {
 
@@ -62,7 +64,7 @@ int goatvr_init()
 	}
 	register_modules();
 	goatvr_detect();
-	return render_module ? 0 : -1;
+	return display_module ? 0 : -1;
 }
 
 void goatvr_shutdown()
@@ -90,7 +92,7 @@ void goatvr_startvr()
 	if(in_vr) return;
 
 	// make sure we have at least one rendering module
-	if(!render_module) {
+	if(!display_module) {
 		fprintf(stderr, "goatvr: can't enter VR mode, no usable rendering module found\n");
 		return;
 	}
@@ -99,14 +101,9 @@ void goatvr_startvr()
 	in_vr = true;
 
 	// make sure any changes done while not in VR make it through to the module
-	render_module->set_origin_mode(origin_mode);
+	display_module->set_origin_mode(origin_mode);
 
-	user_swap = render_module->should_swap();
-
-	/* configure initial tracking sources (if the render module doesn't provide tracking
-	 * or if the user requests it through an environment variable) (in autocfg.cc).
-	 */
-	configure_tracking();
+	user_swap = display_module->should_swap();
 }
 
 void goatvr_stopvr()
@@ -121,8 +118,8 @@ int goatvr_invr()
 
 void goatvr_set_origin_mode(goatvr_origin_mode mode)
 {
-	if(render_module) {
-		render_module->set_origin_mode(mode);
+	if(display_module) {
+		display_module->set_origin_mode(mode);
 	}
 	origin_mode = mode;
 }
@@ -134,60 +131,31 @@ goatvr_origin_mode goatvr_get_origin_mode()
 
 void goatvr_recenter()
 {
-	if(render_module) {
-		render_module->recenter();
+	if(display_module) {
+		display_module->recenter();
 	}
 }
 
 int goatvr_have_headtracking()
 {
-	if(render_module) {
-		return render_module->have_head_tracking();
+	if(display_module) {
+		return display_module->have_headtracking();
 	}
 	return 0;
 }
 
 int goatvr_have_handtracking()
 {
-	if(render_module) {
-		return render_module->have_hand_tracking();
+	if(display_module) {
+		return display_module->have_handtracking();
 	}
 	return 0;
 }
 
-void goatvr_set_default_tracker(void)
+int goatvr_hand_active(int idx)
 {
-	if(render_module) {
-		render_module->set_default_sources();
-	}
-}
-
-void goatvr_set_head_tracker(goatvr_source *s)
-{
-	if(render_module) {
-		render_module->set_head_source(s);
-	}
-}
-
-void goatvr_set_hand_tracker(int idx, goatvr_source *s)
-{
-	if(render_module) {
-		render_module->set_hand_source(idx, s);
-	}
-}
-
-goatvr_source *goatvr_get_head_tracker(void)
-{
-	if(render_module) {
-		return render_module->get_head_source();
-	}
-	return 0;
-}
-
-goatvr_source *goatvr_get_hand_tracker(int idx)
-{
-	if(render_module) {
-		return render_module->get_hand_source(idx);
+	if(display_module) {
+		return display_module->hand_active(idx);
 	}
 	return 0;
 }
@@ -206,8 +174,8 @@ float goatvr_get_units_scale(void)
 
 void goatvr_set_fb_size(int width, int height, float scale)
 {
-	if(render_module) {
-		render_module->set_fbsize(width, height, scale);
+	if(display_module) {
+		display_module->set_fbsize(width, height, scale);
 	}
 	cur_fbwidth = width;
 	cur_fbheight = height;
@@ -216,8 +184,8 @@ void goatvr_set_fb_size(int width, int height, float scale)
 
 float goatvr_get_fb_scale()
 {
-	if(render_module) {
-		RenderTexture *rtex = render_module->get_render_texture();
+	if(display_module) {
+		RenderTexture *rtex = display_module->get_render_texture();
 		return rtex->fbscale;
 	}
 	return cur_fbscale;
@@ -225,8 +193,8 @@ float goatvr_get_fb_scale()
 
 int goatvr_get_fb_width()
 {
-	if(render_module) {
-		RenderTexture *rtex = render_module->get_render_texture();
+	if(display_module) {
+		RenderTexture *rtex = display_module->get_render_texture();
 		return rtex->width;
 	}
 	return cur_fbwidth;
@@ -234,8 +202,8 @@ int goatvr_get_fb_width()
 
 int goatvr_get_fb_height()
 {
-	if(render_module) {
-		RenderTexture *rtex = render_module->get_render_texture();
+	if(display_module) {
+		RenderTexture *rtex = display_module->get_render_texture();
 		return rtex->height;
 	}
 	return cur_fbheight;
@@ -243,8 +211,8 @@ int goatvr_get_fb_height()
 
 int goatvr_get_fb_eye_width(int eye)
 {
-	if(render_module) {
-		RenderTexture *rtex = render_module->get_render_texture();
+	if(display_module) {
+		RenderTexture *rtex = display_module->get_render_texture();
 		return rtex->eye_width[eye];
 	}
 	return cur_fbwidth / 2;
@@ -252,8 +220,8 @@ int goatvr_get_fb_eye_width(int eye)
 
 int goatvr_get_fb_eye_height(int eye)
 {
-	if(render_module) {
-		RenderTexture *rtex = render_module->get_render_texture();
+	if(display_module) {
+		RenderTexture *rtex = display_module->get_render_texture();
 		return rtex->eye_height[eye];
 	}
 	return cur_fbheight;
@@ -261,8 +229,8 @@ int goatvr_get_fb_eye_height(int eye)
 
 int goatvr_get_fb_eye_xoffset(int eye)
 {
-	if(render_module) {
-		RenderTexture *rtex = render_module->get_render_texture();
+	if(display_module) {
+		RenderTexture *rtex = display_module->get_render_texture();
 		return rtex->eye_xoffs[eye];
 	}
 	return eye == GOATVR_LEFT ? 0 : cur_fbwidth / 2;
@@ -270,8 +238,8 @@ int goatvr_get_fb_eye_xoffset(int eye)
 
 int goatvr_get_fb_eye_yoffset(int eye)
 {
-	if(render_module) {
-		RenderTexture *rtex = render_module->get_render_texture();
+	if(display_module) {
+		RenderTexture *rtex = display_module->get_render_texture();
 		return rtex->eye_yoffs[eye];
 	}
 	return 0;
@@ -279,8 +247,8 @@ int goatvr_get_fb_eye_yoffset(int eye)
 
 unsigned int goatvr_get_fb_texture()
 {
-	if(render_module) {
-		RenderTexture *rtex = render_module->get_render_texture();
+	if(display_module) {
+		RenderTexture *rtex = display_module->get_render_texture();
 		return rtex->tex;
 	}
 	return 0;
@@ -288,8 +256,8 @@ unsigned int goatvr_get_fb_texture()
 
 int goatvr_get_fb_texture_width()
 {
-	if(render_module) {
-		RenderTexture *rtex = render_module->get_render_texture();
+	if(display_module) {
+		RenderTexture *rtex = display_module->get_render_texture();
 		return rtex->tex_width;
 	}
 	return next_pow2(cur_fbwidth);
@@ -297,8 +265,8 @@ int goatvr_get_fb_texture_width()
 
 int goatvr_get_fb_texture_height()
 {
-	if(render_module) {
-		RenderTexture *rtex = render_module->get_render_texture();
+	if(display_module) {
+		RenderTexture *rtex = display_module->get_render_texture();
 		return rtex->tex_height;
 	}
 	return next_pow2(cur_fbheight);
@@ -313,7 +281,7 @@ unsigned int goatvr_get_fbo(void)
 
 void goatvr_viewport(int eye)
 {
-	RenderTexture *rtex = render_module ? render_module->get_render_texture() : 0;
+	RenderTexture *rtex = display_module ? display_module->get_render_texture() : 0;
 	if(rtex) {
 		glViewport(rtex->eye_xoffs[eye], rtex->eye_yoffs[eye], rtex->eye_width[eye], rtex->eye_height[eye]);
 	} else {
@@ -326,8 +294,8 @@ static float ident_mat[] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 float *goatvr_view_matrix(int eye)
 {
 	static Mat4 vmat[2];
-	if(render_module) {
-		vmat[eye] = render_module->get_view_matrix(eye);
+	if(display_module) {
+		display_module->get_view_matrix(vmat[eye], eye);
 		return vmat[eye][0];
 	}
 	return ident_mat;
@@ -336,8 +304,8 @@ float *goatvr_view_matrix(int eye)
 float *goatvr_projection_matrix(int eye, float znear, float zfar)
 {
 	static Mat4 pmat[2];
-	if(render_module) {
-		pmat[eye] = render_module->get_proj_matrix(eye, znear, zfar);
+	if(display_module) {
+		display_module->get_proj_matrix(pmat[eye], eye, znear, zfar);
 		return pmat[eye][0];
 	}
 	return ident_mat;
@@ -345,7 +313,7 @@ float *goatvr_projection_matrix(int eye, float znear, float zfar)
 
 void goatvr_draw_start(void)
 {
-	render_module->draw_start(); // this needs to be called before update_fbo for oculus
+	display_module->draw_start(); // this needs to be called before update_fbo for oculus
 
 	update_fbo();
 	if(fbo) {
@@ -357,22 +325,22 @@ void goatvr_draw_start(void)
 
 void goatvr_draw_eye(int eye)
 {
-	if(!render_module) return;
+	if(!display_module) return;
 
 	goatvr_viewport(eye);
-	render_module->draw_eye(eye);
+	display_module->draw_eye(eye);
 }
 
 void goatvr_draw_done()
 {
-	if(!render_module) return;
+	if(!display_module) return;
 
 	if(fbo) {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
-	render_module->draw_mirror();
+	display_module->draw_mirror();
 
-	render_module->draw_done();
+	display_module->draw_done();
 }
 
 int goatvr_should_swap()
@@ -381,80 +349,169 @@ int goatvr_should_swap()
 }
 
 // ---- input device handling ----
-int goatvr_num_sources(void)
-{
-	return (int)sources.size();
-}
 
-goatvr_source *goatvr_get_source(int idx)
+void goatvr_head_position(float *pos)
 {
-	return sources[idx];
-}
-
-goatvr_source *goatvr_find_source(const char *name)
-{
-	int num = goatvr_num_sources();
-	for(int i=0; i<num; i++) {
-		if(strcasecmp(goatvr_source_name(sources[i]), name) == 0) {
-			return sources[i];
-		}
+	Vec3 v;
+	if(display_module) {
+		v = display_module->get_head_position();
 	}
-	return 0;
+	pos[0] = v.x;
+	pos[1] = v.y;
+	pos[2] = v.z;
 }
 
-const char *goatvr_source_name(goatvr_source *dev)
+void goatvr_head_orientation(float *quat)
 {
-	return dev->mod->get_source_name(dev->mod_data);
-}
-
-int goatvr_source_spatial(goatvr_source *dev)
-{
-	return dev->mod->is_source_spatial(dev->mod_data);
-}
-
-int goatvr_source_num_axes(goatvr_source *dev)
-{
-	return dev->mod->get_source_num_axes(dev->mod_data);
-}
-
-int goatvr_source_num_buttons(goatvr_source *dev)
-{
-	return dev->mod->get_source_num_buttons(dev->mod_data);
-}
-
-void goatvr_source_position(goatvr_source *dev, float *pos)
-{
-	Vec3 p = dev->mod->get_source_pos(dev->mod_data);
-	pos[0] = p.x;
-	pos[1] = p.y;
-	pos[2] = p.z;
-}
-
-void goatvr_source_orientation(goatvr_source *dev, float *quat)
-{
-	Quat q = dev->mod->get_source_rot(dev->mod_data);
+	Quat q;
+	if(display_module) {
+		q = display_module->get_head_orientation();
+	}
 	quat[0] = q.x;
 	quat[1] = q.y;
 	quat[2] = q.z;
 	quat[3] = q.w;
 }
 
-float *goatvr_source_matrix(goatvr_source *dev)
+float *goatvr_head_matrix(void)
 {
-	return dev->xform[0];
+	static Mat4 mat;
+	if(display_module) {
+		display_module->get_head_matrix(mat);
+		return mat[0];
+	}
+	return ident_mat;
+}
+
+void goatvr_hand_position(int hand, float *pos)
+{
+	Vec3 v;
+	if(display_module) {
+		v = display_module->get_hand_position(hand);
+	}
+	pos[0] = v.x;
+	pos[1] = v.y;
+	pos[2] = v.z;
+}
+
+void goatvr_hand_orientation(int hand, float *quat)
+{
+	Quat q;
+	if(display_module) {
+		q = display_module->get_hand_orientation(hand);
+	}
+	quat[0] = q.x;
+	quat[1] = q.y;
+	quat[2] = q.z;
+	quat[3] = q.w;
+}
+
+float *goatvr_hand_matrix(int hand)
+{
+	static Mat4 mat;
+	if(display_module) {
+		display_module->get_hand_matrix(mat, hand);
+		return mat[0];
+	}
+	return ident_mat;
+}
+
+int goatvr_gesture(int gest, int hand)
+{
+	if(gest < 0 || gest >= GOATVR_NUM_GESTURES) {
+		return 0;
+	}
+	return gesture[gest][hand];
+}
+
+int goatvr_num_buttons(void)
+{
+	return inp_num_buttons();
+}
+
+const char *goatvr_button_name(int bnidx)
+{
+	InputButton *bn = inp_get_button(bnidx);
+	return bn ? bn->name.c_str() : 0;
+}
+
+int goatvr_button_state(int bnidx)
+{
+	InputButton *bn = inp_get_button(bnidx);
+	if(!bn) return 0;
+
+	return (bn->module->get_button_state(1 << bn->mod_idx) >> bn->mod_idx) & 1;
+}
+
+int goatvr_lookup_button(const char *name)
+{
+	InputButton *bn = inp_find_button(name);
+	return bn ? bn->idx : -1;
+}
+
+int goatvr_num_axes(void)
+{
+	return inp_num_axes();
+}
+
+const char *goatvr_axis_name(int axis_idx)
+{
+	InputAxis *axis = inp_get_axis(axis_idx);
+	return axis ? axis->name.c_str() : 0;
+}
+
+float goatvr_axis_value(int axis_idx)
+{
+	InputAxis *axis = inp_get_axis(axis_idx);
+	if(!axis) return 0.0f;
+
+	return axis->module->get_axis_value(axis->mod_idx);
+}
+
+int goatvr_lookup_axis(const char *name)
+{
+	InputAxis *axis = inp_find_axis(name);
+	return axis ? axis->idx : -1;
+}
+
+int goatvr_num_sticks(void)
+{
+	return inp_num_sticks();
+}
+
+const char *goatvr_stick_name(int stick_idx)
+{
+	InputStick *stick = inp_get_stick(stick_idx);
+	return stick ? stick->name.c_str() : 0;
+}
+
+void goatvr_stick_pos(int stick_idx, float *pos)
+{
+	InputStick *stick = inp_get_stick(stick_idx);
+	if(stick) {
+		Vec2 p = stick->module->get_stick_pos(stick->mod_idx);
+		pos[0] = p.x;
+		pos[1] = p.y;
+	}
+}
+
+int goatvr_lookup_stick(const char *name)
+{
+	InputStick *stick = inp_find_stick(name);
+	return stick ? stick->idx : -1;
 }
 
 // ---- module management ----
 
-int goatvr_activate_module(goatvr_module *vrmod)
+int goatvr_activate_module(goatvr_module *mod)
 {
-	activate(vrmod);
+	activate(mod);
 	return 0;
 }
 
-int goatvr_deactivate_module(goatvr_module *vrmod)
+int goatvr_deactivate_module(goatvr_module *mod)
 {
-	deactivate(vrmod);
+	deactivate(mod);
 	return 0;
 }
 
@@ -473,20 +530,75 @@ goatvr_module *goatvr_find_module(const char *name)
 	return find_module(name);
 }
 
-const char *goatvr_module_name(goatvr_module *vrmod)
+const char *goatvr_module_name(goatvr_module *mod)
 {
-	return vrmod->get_name();
+	return mod->get_name();
 }
 
-int goatvr_module_active(goatvr_module *vrmod)
+enum goatvr_module_type goatvr_module_type(goatvr_module *mod)
 {
-	return vrmod->active();
+	return mod->get_type();
 }
 
-int goatvr_module_usable(goatvr_module *vrmod)
+int goatvr_module_active(goatvr_module *mod)
 {
-	return vrmod->usable();
+	return mod->active();
 }
+
+int goatvr_module_usable(goatvr_module *mod)
+{
+	return mod->usable();
+}
+
+int goatvr_module_headtracking(goatvr_module *mod)
+{
+	return mod->have_headtracking();
+}
+
+int goatvr_module_handtracking(goatvr_module *mod)
+{
+	return mod->have_handtracking();
+}
+
+int goatvr_module_num_buttons(goatvr_module *mod)
+{
+	return mod->num_buttons();
+}
+
+int goatvr_module_num_axes(goatvr_module *mod)
+{
+	return mod->num_axes();
+}
+
+int goatvr_module_num_sticks(goatvr_module *mod)
+{
+	return mod->num_sticks();
+}
+
+const char *goatvr_module_button_name(goatvr_module *mod, int bn)
+{
+	if(bn < 0 || bn >= mod->num_buttons()) {
+		return 0;
+	}
+	return mod->get_button_name(bn);
+}
+
+const char *goatvr_module_axis_name(goatvr_module *mod, int axis)
+{
+	if(axis < 0 || axis >= mod->num_axes()) {
+		return 0;
+	}
+	return mod->get_axis_name(axis);
+}
+
+const char *goatvr_module_stick_name(goatvr_module *mod, int stick)
+{
+	if(stick < 0 || stick >= mod->num_sticks()) {
+		return 0;
+	}
+	return mod->get_stick_name(stick);
+}
+
 
 // ---- user information ----
 
@@ -519,20 +631,9 @@ int goatvr_util_invert_matrix(float *inv, const float *mat)
 
 }	// extern "C"
 
-void goatvr::add_source(Source *s)
+void goatvr::set_gesture(int which, int hand, bool value)
 {
-	std::vector<Source*>::iterator it = std::find(sources.begin(), sources.end(), s);
-	if(it == sources.end()) {
-		sources.push_back(s);
-	}
-}
-
-void goatvr::remove_source(Source *s)
-{
-	std::vector<Source*>::iterator it = std::find(sources.begin(), sources.end(), s);
-	if(it != sources.end()) {
-		sources.erase(it);
-	}
+	gesture[which][hand] = value;
 }
 
 void goatvr::set_user_eye_height(float height)
@@ -577,11 +678,11 @@ static bool update_fbo()
 {
 	static unsigned int last_tex;	// last texture we got from Module::get_render_texture()
 
-	if(!render_module) {
+	if(!display_module) {
 		return false;
 	}
 
-	RenderTexture *rtex = render_module->get_render_texture();
+	RenderTexture *rtex = display_module->get_render_texture();
 	if(!rtex) {
 		return false;
 	}

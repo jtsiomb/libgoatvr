@@ -22,31 +22,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <gmath/gmath.h>
 
 namespace goatvr {
-
 class Module;
-
-struct Source {
-	Module *mod;
-	void *mod_data;
-
-	Mat4 xform;	 // matrix for the spatial sources
-};
-
 }
 
 typedef goatvr::Module goatvr_module;
-typedef goatvr::Source goatvr_source;
 
 #define LIBGOATVR_IMPL
 #include "goatvr.h"
 
 namespace goatvr {
 
+struct PosRot {
+	Vec3 pos;
+	Quat rot;
+	Mat4 xform;
+};
+
+/* called by the module update function when a gesture is detected */
+void set_gesture(int which, int hand, bool value);
+
 void set_user_eye_height(float height);
 void set_user_gender(goatvr_user_gender gender);
-
-void add_source(Source *s);
-void remove_source(Source *s);
 
 unsigned int next_pow2(unsigned int x);
 

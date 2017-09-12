@@ -1,6 +1,6 @@
 /*
 GoatVR - a modular virtual reality abstraction library
-Copyright (C) 2014-2016  John Tsiombikas <nuclear@member.fsf.org>
+Copyright (C) 2014-2017  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -26,10 +26,6 @@ Module::Module()
 {
 	avail = act = false;
 	prio = 0;
-
-	for(int i=0; i<3; i++) {
-		track_src[i] = def_track_src[i] = 0;
-	}
 }
 
 Module::~Module()
@@ -43,9 +39,6 @@ bool Module::init()
 
 void Module::destroy()
 {
-	for(size_t i=0; i<inp_sources.size(); i++) {
-		delete inp_sources[i];
-	}
 }
 
 void Module::set_priority(int p)
@@ -91,6 +84,10 @@ void Module::stop()
 {
 }
 
+void Module::update()
+{
+}
+
 void Module::set_origin_mode(goatvr_origin_mode mode)
 {
 }
@@ -99,85 +96,64 @@ void Module::recenter()
 {
 }
 
-bool Module::have_head_tracking() const
-{
-	return get_head_source() != 0;
-}
-
-bool Module::have_hand_tracking() const
-{
-	return get_hand_source(0) != 0 || get_hand_source(1) != 0;
-}
-
-int Module::num_input_sources() const
-{
-	return (int)inp_sources.size();
-}
-
-Source *Module::get_input_source(int idx) const
-{
-	return inp_sources[idx];
-}
-
-void Module::set_default_sources()
-{
-	for(int i=0; i<3; i++) {
-		track_src[i] = def_track_src[i];
-	}
-}
-
-void Module::set_head_source(Source *src)
-{
-	track_src[0] = src;
-}
-
-Source *Module::get_head_source() const
-{
-	return track_src[0];
-}
-
-void Module::set_hand_source(int idx, Source *src)
-{
-	track_src[idx + 1] = src;
-}
-
-Source *Module::get_hand_source(int idx) const
-{
-	return track_src[idx + 1];
-}
-
-const char *Module::get_source_name(void *sdata) const
-{
-	return "unknown";
-}
-
-bool Module::is_source_spatial(void *sdata) const
+bool Module::have_headtracking() const
 {
 	return false;
 }
 
-int Module::get_source_num_axes(void *sdata) const
+bool Module::have_handtracking() const
+{
+	return false;
+}
+
+bool Module::hand_active(int idx) const
+{
+	return false;
+}
+
+int Module::num_buttons() const
 {
 	return 0;
 }
 
-int Module::get_source_num_buttons(void *sdata) const
+const char *Module::get_button_name(int bn) const
 {
 	return 0;
 }
 
-Vec3 Module::get_source_pos(void *sdata) const
+unsigned int Module::get_button_state(unsigned int mask) const
 {
-	return Vec3(0, 0, 0);
+	return 0;
 }
 
-Quat Module::get_source_rot(void *sdata) const
+int Module::num_axes() const
 {
-	return Quat::identity;
+	return 0;
 }
 
-void Module::update()
+const char *Module::get_axis_name(int axis) const
 {
+	return 0;
+}
+
+float Module::get_axis_value(int axis) const
+{
+	return 0.0f;
+}
+
+int Module::num_sticks() const
+{
+	return 0;
+}
+
+const char *Module::get_stick_name(int stick) const
+{
+	return 0;
+}
+
+Vec2 Module::get_stick_pos(int stick) const
+{
+	return Vec2(0, 0);
 }
 
 void Module::set_fbsize(int width, int height, float fbscale)
@@ -210,24 +186,44 @@ bool Module::should_swap() const
 	return true;
 }
 
-Mat4 Module::get_view_matrix(int eye) const
+void Module::get_view_matrix(Mat4 &mat, int eye) const
 {
-	Source *src = track_src[0];
-
-	if(!src) {
-		return Mat4::identity;
-	}
-
-	Mat4 mat;
-	Vec3 pos = src->mod->get_source_pos(src->mod_data) * goatvr_get_units_scale();
-	Quat rot = src->mod->get_source_rot(src->mod_data);
-	goatvr::calc_inv_matrix(mat, pos, rot);
-	return mat;
+	mat = Mat4::identity;
 }
 
-Mat4 Module::get_proj_matrix(int eye, float znear, float zfar) const
+void Module::get_proj_matrix(Mat4 &mat, int eye, float znear, float zfar) const
 {
-	return Mat4::identity;
+	mat = Mat4::identity;
+}
+
+Vec3 Module::get_head_position() const
+{
+	return Vec3(0, 0, 0);
+}
+
+Quat Module::get_head_orientation() const
+{
+	return Quat::identity;
+}
+
+void Module::get_head_matrix(Mat4 &mat) const
+{
+	mat = Mat4::identity;
+}
+
+Vec3 Module::get_hand_position(int hand) const
+{
+	return Vec3(0, 0, 0);
+}
+
+Quat Module::get_hand_orientation(int hand) const
+{
+	return Quat::identity;
+}
+
+void Module::get_hand_matrix(Mat4 &mat, int hand) const
+{
+	mat = Mat4::identity;
 }
 
 void Module::print_info(const char *fmt, ...) const

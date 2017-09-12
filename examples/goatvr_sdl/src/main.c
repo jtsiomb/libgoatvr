@@ -37,9 +37,6 @@ static int keystate[256];
 
 static int use_mouselook = 1;
 
-static int num_inp_src;
-static goatvr_source **inp_src;
-
 int main(int argc, char **argv)
 {
 	int pos = SDL_WINDOWPOS_UNDEFINED;
@@ -115,16 +112,6 @@ static int init(void)
 	 * handles the swapchain itself.
 	 */
 	should_swap = goatvr_should_swap();
-
-	num_inp_src = goatvr_num_sources();
-	inp_src = malloc(num_inp_src * sizeof *inp_src);
-	assert(inp_src);
-
-	printf("number of input sources: %d\n", num_inp_src);
-	for(i=0; i<num_inp_src; i++) {
-		inp_src[i] = goatvr_get_source(i);
-		printf(" [%d]: %s\n", i, goatvr_source_name(inp_src[i]));
-	}
 
 	if(use_mouselook) {
 		SDL_SetRelativeMouseMode(1);
@@ -284,28 +271,21 @@ static void draw_scene()
 	draw_box(0.05, 1.2, 6, 1.0);
 	draw_box(6, 1.2, 0.05, 1.0);
 
-	/* draw tracking markers for all input devices with spatial tracking support */
-	{
-		float mcol[][4] = {
-			{1, 0, 0, 1},
-			{0, 1, 0, 1},
-			{0, 0, 1, 1},
-			{1, 1, 0, 1},
-			{1, 0, 1, 1},
-			{0, 1, 1, 1}
-		};
-		for(i=0; i<num_inp_src; i++) {
-			goatvr_source *src = goatvr_get_source(i);
-			if(src && goatvr_source_spatial(src)) {
-				glPushMatrix();
-				glTranslatef(0, goatvr_get_eye_height(), 0);
-				glMultMatrixf(goatvr_source_matrix(src));
+	/* draw tracking markers for the hands */
+	for(i=0; i<2; i++) {
+		if(goatvr_hand_active(i)) {
+			float mcol[] = {0, 0, 0, 1};
+			mcol[0] = 1 - i;
+			mcol[3] = i;
 
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mcol[i - 1]);
-				draw_box(0.02, 0.02, 0.02, 1.0);
+			glPushMatrix();
+			glTranslatef(0, goatvr_get_eye_height(), 0);
+			glMultMatrixf(goatvr_hand_matrix(i));
 
-				glPopMatrix();
-			}
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mcol);
+			draw_box(0.02, 0.02, 0.02, 1.0);
+
+			glPopMatrix();
 		}
 	}
 }

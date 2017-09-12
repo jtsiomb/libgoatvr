@@ -1,6 +1,6 @@
 /*
 GoatVR - a modular virtual reality abstraction library
-Copyright (C) 2014-2016  John Tsiombikas <nuclear@member.fsf.org>
+Copyright (C) 2014-2017  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -47,9 +47,9 @@ void ModuleSBS::destroy()
 	Module::destroy();
 }
 
-ModuleType ModuleSBS::get_type() const
+enum goatvr_module_type ModuleSBS::get_type() const
 {
-	return MODULE_RENDERING;
+	return GOATVR_DISPLAY_MODULE;
 }
 
 const char *ModuleSBS::get_name() const
@@ -84,22 +84,20 @@ void ModuleSBS::set_fbsize(int width, int height, float fbscale)
 	win_height = height;
 }
 
-Mat4 ModuleSBS::get_view_matrix(int eye) const
+void ModuleSBS::get_view_matrix(Mat4 &mat, int eye) const
 {
 	float eye_offs[] = {0.5f * ipd, -0.5f * ipd};
 	float units_scale = goatvr_get_units_scale();
 
-	Mat4 xform;
-	xform = Module::get_view_matrix(eye);
-	xform.translate(eye_offs[eye] * units_scale, 0, 0);
+	Module::get_view_matrix(mat, eye);
+	mat.translate(eye_offs[eye] * units_scale, 0, 0);
 
 	if(origin_mode == GOATVR_FLOOR) {
-		xform.translate(0, -1.65 * units_scale, 0);
+		mat.translate(0, -1.65 * units_scale, 0);
 	}
-	return xform;
 }
 
-Mat4 ModuleSBS::get_proj_matrix(int eye, float znear, float zfar) const
+void ModuleSBS::get_proj_matrix(Mat4 &mat, int eye, float znear, float zfar) const
 {
 	// TODO let the user set the fov
 	float vfov = deg_to_rad(60);
@@ -110,7 +108,5 @@ Mat4 ModuleSBS::get_proj_matrix(int eye, float znear, float zfar) const
 	static const float offs[] = {1.0, -1.0};
 	float shift = offs[eye] * (ipd * 0.5 * znear /* / focus_dist? */);
 
-	Mat4 proj;
-	proj.frustum(-right + shift, right + shift, -top, top, znear, zfar);
-	return proj;
+	mat.frustum(-right + shift, right + shift, -top, top, znear, zfar);
 }

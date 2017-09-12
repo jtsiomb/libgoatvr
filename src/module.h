@@ -38,16 +38,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace goatvr {
 
-// rendering modules can only be enabled one at a time
-enum ModuleType { MODULE_RENDERING, MODULE_OTHER };
-
 class Module {
 protected:
 	int prio;
 	bool avail, act;
-
-	Source *track_src[3], *def_track_src[3];
-	std::vector<Source*> inp_sources;
 
 public:
 	Module();
@@ -56,7 +50,7 @@ public:
 	virtual bool init();
 	virtual void destroy();
 
-	virtual ModuleType get_type() const = 0;
+	virtual enum goatvr_module_type get_type() const = 0;
 	virtual const char *get_name() const = 0;
 
 	virtual void set_priority(int p);
@@ -72,35 +66,26 @@ public:
 	virtual void start();
 	virtual void stop();
 
+	virtual void update();
+
 	virtual void set_origin_mode(goatvr_origin_mode mode);
 	virtual void recenter();
 
-	virtual bool have_head_tracking() const;
-	virtual bool have_hand_tracking() const;
+	virtual bool have_headtracking() const;
+	virtual bool have_handtracking() const;
+	virtual bool hand_active(int hand) const;
 
-	virtual int num_input_sources() const;
-	virtual Source *get_input_source(int idx) const;
+	virtual int num_buttons() const;
+	virtual const char *get_button_name(int bn) const;
+	virtual unsigned int get_button_state(unsigned int mask) const;
 
-	// cancels any custom head/hand input source assignments
-	virtual void set_default_sources();
+	virtual int num_axes() const;
+	virtual const char *get_axis_name(int axis) const;
+	virtual float get_axis_value(int axis) const;
 
-	// assign an input source for head tracking
-	virtual void set_head_source(Source *src);
-	virtual Source *get_head_source() const;
-
-	// assign an input source for hand tracking
-	virtual void set_hand_source(int idx, Source *src);
-	virtual Source *get_hand_source(int idx) const;
-
-	// access input source state
-	virtual const char *get_source_name(void *sdata) const;
-	virtual bool is_source_spatial(void *sdata) const;
-	virtual int get_source_num_axes(void *sdata) const;
-	virtual int get_source_num_buttons(void *sdata) const;
-	virtual Vec3 get_source_pos(void *sdata) const;
-	virtual Quat get_source_rot(void *sdata) const;
-
-	virtual void update();
+	virtual int num_sticks() const;
+	virtual const char *get_stick_name(int axis) const;
+	virtual Vec2 get_stick_pos(int stick) const;
 
 	// rendering ops are only valid on rendering modules
 	virtual void set_fbsize(int width, int height, float fbscale);
@@ -114,8 +99,18 @@ public:
 	// should the user do buffer-swaps on their window?
 	virtual bool should_swap() const;
 
-	virtual Mat4 get_view_matrix(int eye) const;
-	virtual Mat4 get_proj_matrix(int eye, float znear, float zfar) const;
+	virtual void get_view_matrix(Mat4 &mat, int eye) const;
+	virtual void get_proj_matrix(Mat4 &mat, int eye, float znear, float zfar) const;
+
+	/* valid if have_head_tracking() */
+	virtual Vec3 get_head_position() const;
+	virtual Quat get_head_orientation() const;
+	virtual void get_head_matrix(Mat4 &mat) const;
+
+	/* valid if have_hand_tracking() */
+	virtual Vec3 get_hand_position(int hand) const;
+	virtual Quat get_hand_orientation(int hand) const;
+	virtual void get_hand_matrix(Mat4 &mat, int hand) const;
 
 	void print_info(const char *fmt, ...) const;
 	void print_error(const char *fmt, ...) const;

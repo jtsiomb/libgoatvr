@@ -1,6 +1,6 @@
 /*
 GoatVR - a modular virtual reality abstraction library
-Copyright (C) 2014-2016  John Tsiombikas <nuclear@member.fsf.org>
+Copyright (C) 2014-2017  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -15,6 +15,7 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+// TODO needs updating
 #ifdef USE_MOD_OPENVR
 
 #include <string.h>
@@ -28,8 +29,8 @@ REG_MODULE(openvr, ModuleOpenVR)
 using namespace goatvr;
 using namespace vr;		// OpenVR namespace
 
-static Mat4 openvr_matrix4(const HmdMatrix44_t &mat);
-static Mat4 openvr_matrix(const HmdMatrix34_t &mat);
+static void openvr_matrix4(Mat4 &res, const HmdMatrix44_t &mat);
+static void openvr_matrix(Mat4 &res, const HmdMatrix34_t &mat);
 static VRTextureBounds_t openvr_tex_bounds(float umin, float vmin, float umax, float vmax);
 
 ModuleOpenVR::ModuleOpenVR()
@@ -38,6 +39,8 @@ ModuleOpenVR::ModuleOpenVR()
 	vrcomp = 0;
 	win_width = win_height = -1;
 	rtex_valid = false;
+
+	memset(xform_valid, 0, sizeof xform_valid);
 }
 
 ModuleOpenVR::~ModuleOpenVR()
@@ -59,9 +62,9 @@ void ModuleOpenVR::destroy()
 	Module::destroy();
 }
 
-ModuleType ModuleOpenVR::get_type() const
+enum goatvr_module_type ModuleOpenVR::get_type() const
 {
-	return MODULE_RENDERING;
+	return GOATVR_DISPLAY_MODULE;
 }
 
 const char *ModuleOpenVR::get_name() const
@@ -104,8 +107,14 @@ void ModuleOpenVR::start()
 	// grab the eye to HMD matrices
 	for(int i=0; i<2; i++) {
 		EVREye eye = i == 0 ? Eye_Left : Eye_Right;
-		eye_to_hmd_xform[i] = openvr_matrix(vr->GetEyeToHeadTransform(eye));
+		openvr_matrix(eye_to_hmd_xform[i], vr->GetEyeToHeadTransform(eye));
 	}
+
+	TrackedDeviceIndex_t idx;
+	idx = vr->GetTrackedDeviceIndexForControllerRole(TrackedControllerRole_LeftHand);
+	hand_idx[0] = idx == k_unTrackedDeviceIndexInvalid ? -1 : (int)idx;
+	idx = vr->GetTrackedDeviceIndexForControllerRole(TrackedControllerRole_RightHand);
+	hand_idx[1] = idx == k_unTrackedDeviceIndexInvalid ? -1 : (int)idx;
 
 	uint32_t x, y;
 	vr->GetRecommendedRenderTargetSize(&x, &y);
@@ -130,27 +139,6 @@ void ModuleOpenVR::stop()
 		rtex.tex = 0;
 	}
 	rtex_valid = false;
-}
-
-void ModuleOpenVR::set_origin_mode(goatvr_origin_mode mode)
-{
-	if(!vr) return;
-
-	if(mode == GOATVR_FLOOR) {
-		vrcomp->SetTrackingSpace(TrackingUniverseStanding);
-	} else {
-		vrcomp->SetTrackingSpace(TrackingUniverseSeated);
-	}
-}
-
-void ModuleOpenVR::recenter()
-{
-	vr->ResetSeatedZeroPose();
-}
-
-bool ModuleOpenVR::have_headtracking() const
-{
-	return true;
 }
 
 void ModuleOpenVR::update()
@@ -180,8 +168,8 @@ void ModuleOpenVR::update()
 	}
 
 	for(int i=0; i<(int)k_unMaxTrackedDeviceCount; i++) {
-		if(vr_pose[i].bPoseIsValid) {
-			xform[i] = openvr_matrix(vr_pose[i].mDeviceToAbsoluteTracking);
+		if((xform_valid[i] = vr_pose[i].bPoseIsValid)) {
+			openvr_matrix(xform[i], vr_pose[i].mDeviceToAbsoluteTracking);
 		}
 
 		// TODO buttons and stuff?
@@ -198,6 +186,37 @@ void ModuleOpenVR::update()
 		eye_xform[i] = eye_to_hmd_xform[i] * hmd_xform;
 		eye_inv_xform[i] = inverse(eye_xform[i]);
 	}
+}
+
+void ModuleOpenVR::set_origin_mode(goatvr_origin_mode mode)
+{
+	if(!vr) return;
+
+	if(mode == GOATVR_FLOOR) {
+		vrcomp->SetTrackingSpace(TrackingUniverseStanding);
+	} else {
+		vrcomp->SetTrackingSpace(TrackingUniverseSeated);
+	}
+}
+
+void ModuleOpenVR::recenter()
+{
+	vr->ResetSeatedZeroPose();
+}
+
+bool ModuleOpenVR::have_headtracking() const
+{
+	return true;
+}
+
+bool ModuleOpenVR::have_handtracking() const
+{
+	return hand_idx[0] >= 0 || hand_idx[1] >= 0;
+}
+
+bool ModuleOpenVR::hand_active(int idx) const
+{
+	return hand_idx[idx] >= 0 && xform_valid[hand_idx[idx]];
 }
 
 void ModuleOpenVR::set_fbsize(int width, int height, float fbscale)
@@ -229,7 +248,7 @@ RenderTexture *ModuleOpenVR::get_render_texture()
 
 		// prepare the OpenVR texture and texture bounds structs
 		vr_tex.handle = (void*)rtex.tex;
-		vr_tex.eType = TextureType_OpenGL;
+		vr_tex.eType = API_OpenGL;
 		vr_tex.eColorSpace = ColorSpace_Linear;
 
 		float umax = (float)rtex.width / (float)rtex.tex_width;
@@ -287,6 +306,7 @@ void ModuleOpenVR::draw_mirror()
 	glLoadIdentity();
 
 	glBegin(GL_QUADS);
+	glColor3f(1, 1, 1);
 	float umax = (float)rtex.width / (float)rtex.tex_width;
 	float vmax = (float)rtex.height / (float)rtex.tex_height;
 	glTexCoord2f(0, 0); glVertex2f(-1, -1);
@@ -302,29 +322,61 @@ void ModuleOpenVR::draw_mirror()
 	glPopAttrib();
 }
 
-Mat4 ModuleOpenVR::get_view_matrix(int eye) const
+void ModuleOpenVR::get_view_matrix(Mat4 &mat, int eye) const
 {
-	return eye_inv_xform[eye];
+	mat = eye_inv_xform[eye];
 }
 
-Mat4 ModuleOpenVR::get_proj_matrix(int eye, float znear, float zfar) const
+void ModuleOpenVR::get_proj_matrix(Mat4 &mat, int eye, float znear, float zfar) const
 {
 	EVREye openvr_eye = eye == GOATVR_LEFT ? Eye_Left : Eye_Right;
-	return openvr_matrix4(vr->GetProjectionMatrix(openvr_eye, znear, zfar));
+	openvr_matrix4(mat, vr->GetProjectionMatrix(openvr_eye, znear, zfar, API_OpenGL));
+}
+
+Vec3 ModuleOpenVR::get_head_position() const
+{
+	return Module::get_head_position();	// TODO
+}
+
+Quat ModuleOpenVR::get_head_orientation() const
+{
+	return Module::get_head_orientation();	// TODO
+}
+
+void ModuleOpenVR::get_head_matrix(Mat4 &mat) const
+{
+	mat = xform[k_unTrackedDeviceIndex_Hmd];
+}
+
+Vec3 ModuleOpenVR::get_hand_position(int idx) const
+{
+	return Module::get_hand_position(idx);	// TODO
+}
+
+Quat ModuleOpenVR::get_hand_orientation(int idx) const
+{
+	return Module::get_hand_orientation(idx);	// TODO
+}
+
+void ModuleOpenVR::get_hand_matrix(Mat4 &mat, int idx) const
+{
+	if(hand_idx[idx] >= 0) {
+		mat = xform[hand_idx[idx]];
+	}
 }
 
 
-static Mat4 openvr_matrix4(const HmdMatrix44_t &mat)
+static void openvr_matrix4(Mat4 &res, const HmdMatrix44_t &mat)
 {
-	return Mat4(mat.m[0][0], mat.m[1][0], mat.m[2][0], mat.m[3][0],
+	res = Mat4(mat.m[0][0], mat.m[1][0], mat.m[2][0], mat.m[3][0],
 			mat.m[0][1], mat.m[1][1], mat.m[2][1], mat.m[3][1],
 			mat.m[0][2], mat.m[1][2], mat.m[2][2], mat.m[3][2],
 			mat.m[0][3], mat.m[1][3], mat.m[2][3], mat.m[3][3]);
 }
 
-static Mat4 openvr_matrix(const HmdMatrix34_t &mat)
+static void openvr_matrix(Mat4 &res, const HmdMatrix34_t &mat)
 {
-	return Mat4(mat.m[0][0], mat.m[1][0], mat.m[2][0], 0,
+	res = Mat4(mat.m[0][0], mat.m[1][0], mat.m[2][0], 0,
 			mat.m[0][1], mat.m[1][1], mat.m[2][1], 0,
 			mat.m[0][2], mat.m[1][2], mat.m[2][2], 0,
 			mat.m[0][3], mat.m[1][3], mat.m[2][3], 1);

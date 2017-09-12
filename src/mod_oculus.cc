@@ -23,16 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mod_oculus.h"
 #include "goatvr_impl.h"
 
-struct SrcData {
-	char name[32];
-	bool valid;
-	Vec3 pos;
-	Quat rot;
-};
-
 REG_MODULE(oculus, ModuleOculus)
 
 using namespace goatvr;
+
+static inline void update_tracking(PosRot *pr, const ovrPosef &pose, float units_scale);
 
 ModuleOculus::ModuleOculus()
 {
@@ -44,6 +39,8 @@ ModuleOculus::ModuleOculus()
 	win_width = win_height = -1;
 
 	rtex_valid = false;
+	have_touch = false;
+	hand_valid[0] = hand_valid[1] = false;
 }
 
 ModuleOculus::~ModuleOculus()
@@ -70,9 +67,9 @@ void ModuleOculus::destroy()
 	Module::destroy();
 }
 
-ModuleType ModuleOculus::get_type() const
+enum goatvr_module_type ModuleOculus::get_type() const
 {
-	return MODULE_RENDERING;
+	return GOATVR_DISPLAY_MODULE;
 }
 
 const char *ModuleOculus::get_name() const
@@ -91,7 +88,11 @@ bool ModuleOculus::detect()
 		return false;
 	}
 
-	print_info("HMD found: %s - %s\n", hmd.Manufacturer, hmd.ProductName);
+	unsigned int ctlmask = ovr_GetConnectedControllerTypes(ovr);
+	have_touch = ctlmask & ovrControllerType_Touch;
+
+	print_info("HMD found: %s - %s (%s hand tracking)\n", hmd.Manufacturer, hmd.ProductName,
+			have_touch ? "with" : "no");
 	avail = true;
 	return true;
 }
@@ -116,57 +117,65 @@ void ModuleOculus::start()
 	// force creation of the render target when start is called
 	get_render_texture();
 
-	// At least the head-tracking source is always available
-	Source *src = new Source;
-	SrcData *srcdata = new SrcData;
-	src->mod = this;
-	src->mod_data = srcdata;
-	strcpy(srcdata->name, "oculus-head");
-
-	inp_sources.push_back(src);
-	def_track_src[0] = track_src[0] = src;
-	add_source(src);
-
 	unsigned int ctlmask = ovr_GetConnectedControllerTypes(ovr);
 	printf("ctlmask: %u\n", ctlmask);
 
-	if(ctlmask & ovrControllerType_Touch) {
-		for(int i=0; i<2; i++) {
-			src = new Source;
-			srcdata = new SrcData;
-			src->mod = this;
-			src->mod_data = srcdata;
-			strcpy(srcdata->name, i ? "oculus-rhand" : "oculus-lhand");
-			srcdata->valid = false;
-
-			inp_sources.push_back(src);
-			def_track_src[i + 1] = track_src[i + 1] = src;
-			add_source(src);
-		}
-	}
+	have_touch = ctlmask & ovrControllerType_Touch;
 }
 
 void ModuleOculus::stop()
 {
 	if(!ovr) return;	// not started
 
-	for(int i=0; i<3; i++) {
-		if(def_track_src[i]) {
-			remove_source(def_track_src[i]);
-			delete def_track_src[i];
-			delete (SrcData*)def_track_src[i]->mod_data;
-			def_track_src[i] = track_src[i] = 0;
-		}
-	}
-	inp_sources.clear();
-
 	if(ovr_rtex) {
 		ovr_DestroyTextureSwapChain(ovr, ovr_rtex);
 		ovr_rtex = 0;
 	}
 	rtex_valid = false;
+	hand_valid[0] = hand_valid[1] = false;
 	ovr_Destroy(ovr);
 	ovr = 0;
+}
+
+void ModuleOculus::update()
+{
+	float units_scale = goatvr_get_units_scale();
+	ovrPosef eye_offs[2] = {
+		rdesc[0].HmdToEyePose,
+		rdesc[1].HmdToEyePose
+	};
+
+	double tm = ovr_GetPredictedDisplayTime(ovr, 0);
+	ovrTrackingState tstate = ovr_GetTrackingState(ovr, tm, ovrTrue);
+	ovr_CalcEyePoses(tstate.HeadPose.ThePose, eye_offs, ovr_layer.RenderPose);
+
+	// fill in the details for the head input source
+	update_tracking(&head, tstate.HeadPose.ThePose, units_scale);
+
+	for(int i=0; i<2; i++) {
+		ovrVector3f pos = ovr_layer.RenderPose[i].Position;
+		ovrQuatf rot = ovr_layer.RenderPose[i].Orientation;
+
+		eye[i].pos = Vec3(pos.x, pos.y, pos.z) * units_scale;
+		eye[i].rot = Quat(rot.x, rot.y, rot.z, rot.w);
+
+		Mat4 rmat = eye[i].rot.calc_matrix();
+		Mat4 tmat;
+		tmat.translation(eye[i].pos);
+		eye[i].xform = rmat * tmat;
+
+		rmat.transpose();
+		tmat.translation(-eye[i].pos);
+		eye_inv_xform[i] = tmat * rmat;
+
+		// also update hand tracking poses if available
+		if(have_touch) {
+			hand_valid[i] = (tstate.HandStatusFlags[i] & ovrStatus_PositionTracked) != 0;
+			update_tracking(eye + i, tstate.HandPoses[i].ThePose, units_scale);
+		}
+	}
+
+	// TODO check the state of buttons and axes on hand controllers
 }
 
 void ModuleOculus::set_origin_mode(goatvr_origin_mode mode)
@@ -187,95 +196,64 @@ void ModuleOculus::recenter()
 	}
 }
 
-const char *ModuleOculus::get_source_name(void *sdata) const
-{
-	SrcData *sd = (SrcData*)sdata;
-	return sd->name;
-}
-
-bool ModuleOculus::is_source_spatial(void *sdata) const
+bool ModuleOculus::have_headtracking() const
 {
 	return true;
 }
 
-int ModuleOculus::get_source_num_axes(void *sdata) const
+bool ModuleOculus::have_handtracking() const
 {
-	return 0;	   // TODO
+	return have_touch;
 }
 
-int ModuleOculus::get_source_num_buttons(void *sdata) const
+bool ModuleOculus::hand_active(int hand) const
 {
-	return 0;	   // TODO
+	return hand_valid[hand];
 }
 
-Vec3 ModuleOculus::get_source_pos(void *sdata) const
+int ModuleOculus::num_buttons() const
 {
-	return ((SrcData*)sdata)->pos;
+	return 0;	// TODO
 }
 
-Quat ModuleOculus::get_source_rot(void *sdata) const
+const char *ModuleOculus::get_button_name(int bn) const
 {
-	return ((SrcData*)sdata)->rot;
+	return 0;	// TODO
 }
 
-static inline void update_source(Source *src, const ovrPosef &pose, float units_scale)
+unsigned int ModuleOculus::get_button_state(unsigned int mask) const
 {
-	SrcData *sd = (SrcData*)src->mod_data;
-
-	ovrVector3f ovrpos = pose.Position;
-	ovrQuatf ovrrot = pose.Orientation;
-
-	sd->pos = Vec3(ovrpos.x, ovrpos.y, ovrpos.z) * units_scale;
-	sd->rot = Quat(ovrrot.x, ovrrot.y, ovrrot.z, ovrrot.w);
-
-	Mat4 rmat = sd->rot.calc_matrix();
-	Mat4 tmat;
-	tmat.translation(sd->pos);
-
-	src->xform = rmat * tmat;
+	return 0;	// TODO
 }
 
-void ModuleOculus::update()
+int ModuleOculus::num_axes() const
 {
-	float units_scale = goatvr_get_units_scale();
-	ovrPosef eye_offs[2] = {
-		rdesc[0].HmdToEyePose,
-		rdesc[1].HmdToEyePose
-	};
+	return 0;	// TODO
+}
 
-	double tm = ovr_GetPredictedDisplayTime(ovr, 0);
-	ovrTrackingState tstate = ovr_GetTrackingState(ovr, tm, ovrTrue);
-	ovr_CalcEyePoses(tstate.HeadPose.ThePose, eye_offs, ovr_layer.RenderPose);
+const char *ModuleOculus::get_axis_name(int axis) const
+{
+	return 0;	// TODO
+}
 
-	// fill in the details for the head input source
-	update_source(def_track_src[0], tstate.HeadPose.ThePose, units_scale);
+float ModuleOculus::get_axis_value(int axis) const
+{
+	return 0.0f;	// TODO
+}
 
-	for(int i=0; i<2; i++) {
-		ovrVector3f pos = ovr_layer.RenderPose[i].Position;
-		ovrQuatf rot = ovr_layer.RenderPose[i].Orientation;
+int ModuleOculus::num_sticks() const
+{
+	return 0;	// TODO
+}
 
-		eye_pos[i] = Vec3(pos.x, pos.y, pos.z) * units_scale;
-		eye_rot[i] = Quat(rot.x, rot.y, rot.z, rot.w);
+const char *ModuleOculus::get_stick_name(int stick) const
+{
+	return 0;	// TODO
+}
 
-		Mat4 rmat = eye_rot[i].calc_matrix();
-		Mat4 tmat;
-		tmat.translation(eye_pos[i]);
-		eye_xform[i] = rmat * tmat;
-
-		rmat.transpose();
-		tmat.translation(-eye_pos[i]);
-		eye_inv_xform[i] = tmat * rmat;
-
-		// also update hand tracking poses if available
-		if(def_track_src[i + 1]) {
-			SrcData *sd = (SrcData*)def_track_src[i + 1];
-
-			sd->valid = (tstate.HandStatusFlags[i] & ovrStatus_PositionTracked) != 0;
-			//if(sd->valid) {
-				update_source(def_track_src[i + 1], tstate.HandPoses[i].ThePose, units_scale);
-			//}
-		}
-	}
+Vec2 ModuleOculus::get_stick_pos(int stick) const
+{
+	return Vec2(0, 0);	// TODO
 }
 
 void ModuleOculus::set_fbsize(int width, int height, float fbscale)
@@ -445,6 +423,7 @@ void ModuleOculus::draw_mirror()
 	glLoadIdentity();
 
 	glBegin(GL_QUADS);
+	glColor3f(1, 1, 1);
 	glTexCoord2f(0, 1); glVertex2f(-1, -1);
 	glTexCoord2f(1, 1); glVertex2f(1, -1);
 	glTexCoord2f(1, 0); glVertex2f(1, 1);
@@ -463,16 +442,62 @@ bool ModuleOculus::should_swap() const
 	return true;
 }
 
-Mat4 ModuleOculus::get_view_matrix(int eye) const
+void ModuleOculus::get_view_matrix(Mat4 &mat, int eye) const
 {
-	return eye_inv_xform[eye];
+	mat = eye_inv_xform[eye];
 }
 
-Mat4 ModuleOculus::get_proj_matrix(int eye, float znear, float zfar) const
+void ModuleOculus::get_proj_matrix(Mat4 &mat, int eye, float znear, float zfar) const
 {
 	ovrMatrix4f m = ovrMatrix4f_Projection(rdesc[eye].Fov, znear, zfar, ovrProjection_ClipRangeOpenGL);
-	return transpose(*(Mat4*)&m);
+	mat = transpose(*(Mat4*)&m);
 }
+
+Vec3 ModuleOculus::get_head_position() const
+{
+	return head.pos;
+}
+
+Quat ModuleOculus::get_head_orientation() const
+{
+	return head.rot;
+}
+
+void ModuleOculus::get_head_matrix(Mat4 &mat) const
+{
+	mat = head.xform;
+}
+
+Vec3 ModuleOculus::get_hand_position(int idx) const
+{
+	return hand[idx].pos;
+}
+
+Quat ModuleOculus::get_hand_orientation(int idx) const
+{
+	return hand[idx].rot;
+}
+
+void ModuleOculus::get_hand_matrix(Mat4 &mat, int idx) const
+{
+	mat = hand[idx].xform;
+}
+
+static inline void update_tracking(PosRot *pr, const ovrPosef &pose, float units_scale)
+{
+	ovrVector3f ovrpos = pose.Position;
+	ovrQuatf ovrrot = pose.Orientation;
+
+	pr->pos = Vec3(ovrpos.x, ovrpos.y, ovrpos.z) * units_scale;
+	pr->rot = Quat(ovrrot.x, ovrrot.y, ovrrot.z, ovrrot.w);
+
+	Mat4 rmat = pr->rot.calc_matrix();
+	Mat4 tmat;
+	tmat.translation(pr->pos);
+
+	pr->xform = rmat * tmat;
+}
+
 
 #else
 

@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace goatvr {
 
 void activate_module();
-void configure_tracking();
 
 }	// namespace goatvr
 

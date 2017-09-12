@@ -1,6 +1,6 @@
 /*
 GoatVR - a modular virtual reality abstraction library
-Copyright (C) 2014-2016  John Tsiombikas <nuclear@member.fsf.org>
+Copyright (C) 2014-2017  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -43,6 +43,9 @@ protected:
 	Quat eye_rot[2];
 	Mat4 eye_xform[2], eye_inv_xform[2];
 
+	Vec3 head_pos;
+	Mat4 head_xform;
+
 	float eye_height;
 
 	int win_width, win_height;
@@ -54,7 +57,7 @@ public:
 	bool init();
 	void destroy();
 
-	ModuleType get_type() const;
+	enum goatvr_module_type get_type() const;
 	const char *get_name() const;
 
 	bool detect();
@@ -62,12 +65,12 @@ public:
 	void start();
 	void stop();
 
+	void update();
+
 	void set_origin_mode(goatvr_origin_mode mode);
 	void recenter();
 
 	bool have_headtracking() const;
-
-	void update();
 
 	void set_fbsize(int width, int height, float fbscale);
 	RenderTexture *get_render_texture();
@@ -77,8 +80,12 @@ public:
 
 	bool should_swap() const;
 
-	Mat4 get_view_matrix(int eye) const;
-	Mat4 get_proj_matrix(int eye, float znear, float zfar) const;
+	void get_view_matrix(Mat4 &mat, int eye) const;
+	void get_proj_matrix(Mat4 &mat, int eye, float znear, float zfar) const;
+
+	Vec3 get_head_position() const;
+	Quat get_head_orientation() const;
+	void get_head_matrix(Mat4 &mat) const;
 };
 
 }	// namespace goatvr

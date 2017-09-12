@@ -1,6 +1,7 @@
 *.o
 *.swp
 build/
+build-mingw/
 Release/
 Debug/
 *.exe
@@ -10,3 +11,7 @@ Debug/
 *.lib
 reg_modules.cc
 *.log
+CMakeFIles/
+Makefile
+*.cmake
+goatvr_sdl

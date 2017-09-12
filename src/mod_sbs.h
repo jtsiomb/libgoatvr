@@ -1,6 +1,6 @@
 /*
 GoatVR - a modular virtual reality abstraction library
-Copyright (C) 2014-2016  John Tsiombikas <nuclear@member.fsf.org>
+Copyright (C) 2014-2017  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -38,7 +38,7 @@ public:
 	bool init();
 	void destroy();
 
-	ModuleType get_type() const;
+	enum goatvr_module_type get_type() const;
 	const char *get_name() const;
 
 	bool detect();
@@ -48,8 +48,8 @@ public:
 
 	void set_fbsize(int width, int height, float fbscale);
 
-	Mat4 get_view_matrix(int eye) const;
-	Mat4 get_proj_matrix(int eye, float znear, float zfar) const;
+	void get_view_matrix(Mat4 &mat, int eye) const;
+	void get_proj_matrix(Mat4 &mat, int eye, float znear, float zfar) const;
 };
 
 }	// namespace goatvr

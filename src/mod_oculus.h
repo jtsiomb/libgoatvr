@@ -36,10 +36,15 @@ protected:
 	ovrTextureSwapChainData *ovr_rtex;
 	ovrLayerEyeFov ovr_layer;
 
+	bool have_touch;
+
+	PosRot head;
+	PosRot hand[2];
+	bool hand_valid[2];
+
 	double input_time;
-	Vec3 eye_pos[2];
-	Quat eye_rot[2];
-	Mat4 eye_xform[2], eye_inv_xform[2];
+	PosRot eye[2];
+	Mat4 eye_inv_xform[2];
 
 	ovrMirrorTextureData *ovr_mirtex;
 	unsigned int mirtex;
@@ -54,7 +59,7 @@ public:
 	bool init();
 	void destroy();
 
-	ModuleType get_type() const;
+	enum goatvr_module_type get_type() const;
 	const char *get_name() const;
 
 	bool detect();
@@ -62,17 +67,26 @@ public:
 	void start();
 	void stop();
 
+	void update();
+
 	void set_origin_mode(goatvr_origin_mode mode);
 	void recenter();
 
-	const char *get_source_name(void *sdata) const;
-	bool is_source_spatial(void *sdata) const;
-	int get_source_num_axes(void *sdata) const;
-	int get_source_num_buttons(void *sdata) const;
-	Vec3 get_source_pos(void *sdata) const;
-	Quat get_source_rot(void *sdata) const;
+	bool have_headtracking() const;
+	bool have_handtracking() const;
+	bool hand_active(int hand) const;
 
-	void update();
+	int num_buttons() const;
+	const char *get_button_name(int bn) const;
+	unsigned int get_button_state(unsigned int mask) const;
+
+	int num_axes() const;
+	const char *get_axis_name(int axis) const;
+	float get_axis_value(int axis) const;
+
+	int num_sticks() const;
+	const char *get_stick_name(int axis) const;
+	Vec2 get_stick_pos(int stick) const;
 
 	void set_fbsize(int width, int height, float fbscale);
 	RenderTexture *get_render_texture();
@@ -83,8 +97,16 @@ public:
 
 	bool should_swap() const;
 
-	Mat4 get_view_matrix(int eye) const;
-	Mat4 get_proj_matrix(int eye, float znear, float zfar) const;
+	void get_view_matrix(Mat4 &mat, int eye) const;
+	void get_proj_matrix(Mat4 &mat, int eye, float znear, float zfar) const;
+
+	Vec3 get_head_position() const;
+	Quat get_head_orientation() const;
+	void get_head_matrix(Mat4 &mat) const;
+
+	Vec3 get_hand_position(int hand) const;
+	Quat get_hand_orientation(int hand) const;
+	void get_hand_matrix(Mat4 &mat, int hand) const;
 };
 
 }	// namespace goatvr

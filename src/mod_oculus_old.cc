@@ -1,6 +1,6 @@
 /*
 GoatVR - a modular virtual reality abstraction library
-Copyright (C) 2014-2016  John Tsiombikas <nuclear@member.fsf.org>
+Copyright (C) 2014-2017  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -81,9 +81,9 @@ void ModuleOculusOld::destroy()
 	Module::destroy();
 }
 
-ModuleType ModuleOculusOld::get_type() const
+enum goatvr_module_type ModuleOculusOld::get_type() const
 {
-	return MODULE_RENDERING;
+	return GOATVR_DISPLAY_MODULE;
 }
 
 const char *ModuleOculusOld::get_name() const
@@ -193,6 +193,46 @@ void ModuleOculusOld::stop()
 	hmd = 0;
 }
 
+void ModuleOculusOld::update()
+{
+	float units_scale = goatvr_get_units_scale();
+	ovrVector3f eye_offs[2] = {
+		ovr_rdesc[0].HmdToEyeViewOffset,
+		ovr_rdesc[1].HmdToEyeViewOffset
+	};
+
+	ovrTrackingState tstate;
+	ovrHmd_GetEyePoses(hmd, 0, eye_offs, ovr_poses, &tstate);
+
+	Mat4 eye_rmat;
+
+	for(int i=0; i<2; i++) {
+		ovrVector3f pos = ovr_poses[i].Position;
+		ovrQuatf rot = ovr_poses[i].Orientation;
+
+		eye_pos[i] = Vec3(pos.x, pos.y, pos.z) * units_scale;
+		eye_rot[i] = Quat(rot.x, rot.y, rot.z, rot.w);
+
+		eye_rmat = transpose(eye_rot[i].calc_matrix());
+		Mat4 tmat;
+		tmat.translation(-eye_pos[i]);
+		if(origin_mode == GOATVR_FLOOR) {
+			tmat.translate(0, -eye_height * units_scale, 0);
+		}
+		eye_inv_xform[i] = tmat * eye_rmat;
+
+		// TODO eye_xform
+	}
+
+	head_pos = (eye_pos[0] + eye_pos[1]) * 0.5;
+	Mat4 tmat;
+	tmat.translation(head_pos);
+	if(origin_mode == GOATVR_FLOOR) {
+		tmat.translate(0, eye_height * units_scale, 0);
+	}
+	head_xform = eye_rmat * tmat;
+}
+
 void ModuleOculusOld::set_origin_mode(goatvr_origin_mode mode)
 {
 	origin_mode = mode;
@@ -210,37 +250,6 @@ bool ModuleOculusOld::have_headtracking() const
 	return !fakehmd;
 }
 
-void ModuleOculusOld::update()
-{
-	float units_scale = goatvr_get_units_scale();
-	ovrVector3f eye_offs[2] = {
-		ovr_rdesc[0].HmdToEyeViewOffset,
-		ovr_rdesc[1].HmdToEyeViewOffset
-	};
-
-	ovrTrackingState tstate;
-	ovrHmd_GetEyePoses(hmd, 0, eye_offs, ovr_poses, &tstate);
-
-	for(int i=0; i<2; i++) {
-		ovrVector3f pos = ovr_poses[i].Position;
-		ovrQuatf rot = ovr_poses[i].Orientation;
-
-		eye_pos[i] = Vec3(pos.x, pos.y, pos.z) * units_scale;
-		eye_rot[i] = Quat(rot.x, rot.y, rot.z, rot.w);
-
-		Mat4 rmat = transpose(eye_rot[i].calc_matrix());
-		Mat4 tmat;
-		tmat.translation(-eye_pos[i]);
-		if(origin_mode == GOATVR_FLOOR) {
-			tmat.translate(0, -eye_height * units_scale, 0);
-		}
-		eye_inv_xform[i] = tmat * rmat;
-
-		// TODO eye_xform
-
-	}
-	// TODO do we have to translate by eye_offs?
-}
 
 void ModuleOculusOld::set_fbsize(int width, int height, float fbscale)
 {
@@ -305,16 +314,32 @@ bool ModuleOculusOld::should_swap() const
 	return false;
 }
 
-Mat4 ModuleOculusOld::get_view_matrix(int eye) const
+void ModuleOculusOld::get_view_matrix(Mat4 &mat, int eye) const
 {
-	return eye_inv_xform[eye];
+	mat = eye_inv_xform[eye];
 }
 
-Mat4 ModuleOculusOld::get_proj_matrix(int eye, float znear, float zfar) const
+void ModuleOculusOld::get_proj_matrix(Mat4 &mat, int eye, float znear, float zfar) const
 {
-	return ovr_matrix(ovrMatrix4f_Projection(ovr_rdesc[eye].Fov, znear, zfar,
+	mat = ovr_matrix(ovrMatrix4f_Projection(ovr_rdesc[eye].Fov, znear, zfar,
 			ovrProjection_RightHanded | ovrProjection_ClipRangeOpenGL));
 }
+
+Vec3 ModuleOculusOld::get_head_position() const
+{
+	return head_pos;
+}
+
+Quat ModuleOculusOld::get_head_orientation() const
+{
+	return eye_rot[0];
+}
+
+void ModuleOculusOld::get_head_matrix(Mat4 &mat) const
+{
+	mat = head_xform;
+}
+
 
 static Mat4 ovr_matrix(const ovrMatrix4f &mat)
 {

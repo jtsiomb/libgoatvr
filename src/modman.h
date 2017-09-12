@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace goatvr {
 
-extern Module *render_module;
+extern Module *display_module;
 
 void destroy_modules();
 

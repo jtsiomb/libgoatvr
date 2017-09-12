@@ -25,7 +25,7 @@ option(mod_oculus_old "Build old Oculus SDK 0.5 module" ${mod_oculus_old_default
 option(mod_sball "Build spaceball 6dof input module" ${mod_sball_default})
 
 set(SO_MAJOR 1)
-set(SO_MINOR 1)
+set(SO_MINOR 2)
 
 file(GLOB src "src/*.cc")
 file(GLOB hdr "src/*.h")

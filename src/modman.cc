@@ -36,7 +36,7 @@ static struct {
 
 namespace goatvr {
 
-Module *render_module;
+Module *display_module;
 
 static std::vector<Module*> modules;
 static std::set<Module*> active;
@@ -50,7 +50,7 @@ void destroy_modules()
 	modules.clear();
 	active.clear();
 	num_avail = 0;
-	render_module = 0;
+	display_module = 0;
 }
 
 void add_module(Module *m)
@@ -61,7 +61,7 @@ void add_module(Module *m)
 		}
 		modules.push_back(m);
 
-		if(m->get_type() == MODULE_RENDERING) {
+		if(m->get_type() == GOATVR_DISPLAY_MODULE) {
 			// assign a priority
 			for(int i=0; modprio[i].name; i++) {
 				if(strcmp(m->get_name(), modprio[i].name) == 0) {
@@ -109,20 +109,20 @@ void detect()
 
 void activate(Module *m)
 {
-	if(m->get_type() == MODULE_RENDERING) {
+	if(m->get_type() == GOATVR_DISPLAY_MODULE) {
 		// only allow a single active rendering module
-		if(render_module) {
-			deactivate(render_module);
+		if(display_module) {
+			deactivate(display_module);
 		}
-		render_module = m;
+		display_module = m;
 	}
 	active.insert(m);
 }
 
 void deactivate(Module *m)
 {
-	if(m->get_type() == MODULE_RENDERING) {
-		render_module = 0;
+	if(m->get_type() == GOATVR_DISPLAY_MODULE) {
+		display_module = 0;
 	}
 	active.erase(m);
 }
@@ -150,22 +150,22 @@ void update()
 
 void draw_start()
 {
-	if(render_module) {
-		render_module->draw_start();
+	if(display_module) {
+		display_module->draw_start();
 	}
 }
 
 void draw_eye(int eye)
 {
-	if(render_module) {
-		render_module->draw_eye(eye);
+	if(display_module) {
+		display_module->draw_eye(eye);
 	}
 }
 
 void draw_done()
 {
-	if(render_module) {
-		render_module->draw_done();
+	if(display_module) {
+		display_module->draw_done();
 	}
 }
 

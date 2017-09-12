@@ -17,13 +17,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifdef USE_MOD_SBALL
 
+#include <vector>
 #include <spnav.h>
 #include "mod_sball.h"
 #include "goatvr_impl.h"
 
-struct SrcData {
-	Vec3 pos;
-	Quat rot;
+// TODO find a way to get the actual number of buttons
+#define NUM_BUTTONS	16
+static const char *button_names[] = {
+	"spaceball button 00", "spaceball button 01", "spaceball button 02", "spaceball button 03",
+	"spaceball button 04", "spaceball button 05", "spaceball button 06", "spaceball button 07",
+	"spaceball button 08", "spaceball button 09", "spaceball button 10", "spaceball button 11",
+	"spaceball button 12", "spaceball button 13", "spaceball button 14", "spaceball button 15"
+};
+static const char *axis_names[] = {
+	"spaceball tx", "spaceball ty", "spaceball tz",
+	"spaceball rx", "spaceball ry", "spaceball rz"
 };
 
 REG_MODULE(sball, ModuleSpaceball)
@@ -33,7 +42,6 @@ using namespace goatvr;
 ModuleSpaceball::ModuleSpaceball()
 {
 	fd = -1;
-	src = 0;
 }
 
 ModuleSpaceball::~ModuleSpaceball()
@@ -54,9 +62,9 @@ void ModuleSpaceball::destroy()
 	Module::destroy();
 }
 
-ModuleType ModuleSpaceball::get_type() const
+enum goatvr_module_type ModuleSpaceball::get_type() const
 {
-	return MODULE_OTHER;
+	return GOATVR_INPUT_MODULE;
 }
 
 const char *ModuleSpaceball::get_name() const
@@ -84,78 +92,87 @@ void ModuleSpaceball::start()
 		print_error("failed to open connection to the spacenav daemon\n");
 		return;
 	}
-
-	SrcData *sd = new SrcData;
-
-	src = new Source;
-	src->mod = this;
-	src->mod_data = sd;
-	add_source(src);
 }
 
 void ModuleSpaceball::stop()
 {
 	if(fd < 0) return;
 
-	if(src) {
-		remove_source(src);
-		delete (SrcData*)src->mod_data;
-		delete src;
-		src = 0;
-	}
-
 	spnav_close();
 	fd = -1;
 }
 
-const char *ModuleSpaceball::get_source_name(void *sdata) const
-{
-	return "spaceball";
-}
-
-bool ModuleSpaceball::is_source_spatial(void *sdata) const
-{
-	return true;
-}
-
-Vec3 ModuleSpaceball::get_source_pos(void *sdata) const
-{
-	return ((SrcData*)sdata)->pos;
-}
-
-Quat ModuleSpaceball::get_source_rot(void *sdata) const
-{
-	return ((SrcData*)sdata)->rot;
-}
-
 void ModuleSpaceball::update()
 {
-	SrcData *sdata = (SrcData*)src->mod_data;
+	bool xform_dirty = false;
 	spnav_event ev;
 
 	while(spnav_poll_event(&ev)) {
 		if(ev.type == SPNAV_EVENT_MOTION) {
+			xform_dirty = true;
+			axis[0] = ev.motion.x;
+			axis[1] = ev.motion.y;
+			axis[2] = ev.motion.z;
+			axis[3] = ev.motion.rx;
+			axis[4] = ev.motion.ry;
+			axis[5] = ev.motion.rz;
+
 			if(ev.motion.rx || ev.motion.ry || ev.motion.rz) {
 				Vec3 rvec = Vec3(ev.motion.rx, ev.motion.ry, ev.motion.rz);
 				float len = length(rvec);
 				Vec3 axis = Vec3(rvec.x / len, rvec.y / len, -rvec.z / len);
-				sdata->rot.rotate(axis, len * 0.001);
+				rot.rotate(axis, len * 0.001);
 			}
 
 			Vec3 dir = Vec3(ev.motion.x * 0.001, ev.motion.y * 0.001, -ev.motion.z * 0.001);
 			//sdata->pos += rotate(dir, sdata->rot);
-			sdata->pos += dir;
+			pos += dir;
 
 		} else {
 			if(ev.button.press) {
-				// TODO
+				bnstate |= 1 << ev.button.bnum;
+			} else {
+				bnstate &= ~(1 << ev.button.bnum);
 			}
 		}
 
 		spnav_remove_events(SPNAV_EVENT_MOTION);
 	}
 
-	calc_matrix(src->xform, sdata->pos, sdata->rot);
+	if(xform_dirty) {
+		calc_matrix(xform, pos, rot);
+	}
+}
+
+
+int ModuleSpaceball::num_buttons() const
+{
+	return NUM_BUTTONS;
+}
+
+const char *ModuleSpaceball::get_button_name(int bn) const
+{
+	return button_names[bn];
+}
+
+unsigned int ModuleSpaceball::get_button_state(unsigned int mask) const
+{
+	return bnstate & mask;
+}
+
+int ModuleSpaceball::num_axes() const
+{
+	return 6;
+}
+
+const char *ModuleSpaceball::get_axis_name(int axis) const
+{
+	return axis_names[axis];
+}
+
+float ModuleSpaceball::get_axis_value(int axis) const
+{
+	return this->axis[axis];
 }
 
 #else

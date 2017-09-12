@@ -25,7 +25,11 @@ namespace goatvr {
 class ModuleSpaceball : public Module {
 protected:
 	int fd;
-	Source *src;
+	unsigned int bnstate;
+	float axis[6];
+	Vec3 pos;
+	Quat rot;
+	Mat4 xform;
 
 public:
 	ModuleSpaceball();
@@ -34,7 +38,7 @@ public:
 	bool init();
 	void destroy();
 
-	ModuleType get_type() const;
+	enum goatvr_module_type get_type() const;
 	const char *get_name() const;
 
 	bool detect();
@@ -42,12 +46,15 @@ public:
 	void start();
 	void stop();
 
-	const char *get_source_name(void *sdata) const;
-	bool is_source_spatial(void *sdata) const;
-	Vec3 get_source_pos(void *sdata) const;
-	Quat get_source_rot(void *sdata) const;
-
 	void update();
+
+	int num_buttons() const;
+	const char *get_button_name(int bn) const;
+	unsigned int get_button_state(unsigned int mask) const;
+
+	int num_axes() const;
+	const char *get_axis_name(int axis) const;
+	float get_axis_value(int axis) const;
 };
 
 }	// namespace goatvr

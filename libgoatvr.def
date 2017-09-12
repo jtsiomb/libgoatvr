@@ -11,11 +11,7 @@ EXPORTS
 	goatvr_recenter
 	goatvr_have_headtracking
 	goatvr_have_handtracking
-	goatvr_set_default_tracker
-	goatvr_set_head_tracker
-	goatvr_set_hand_tracker
-	goatvr_get_head_tracker
-	goatvr_get_hand_tracker
+	goatvr_hand_active
 	goatvr_set_units_scale
 	goatvr_get_units_scale
 	goatvr_set_fb_size
@@ -31,30 +27,35 @@ EXPORTS
 	goatvr_get_fb_texture_height
 	goatvr_get_fbo
 	goatvr_viewport
-	goatvr_view_matrix
-	goatvr_projection_matrix
 	goatvr_draw_start
 	goatvr_draw_eye
 	goatvr_draw_done
 	goatvr_should_swap
-	goatvr_num_sources
-	goatvr_get_source
-	goatvr_find_source
-	goatvr_source_name
-	goatvr_source_spatial
-	goatvr_source_num_axes
-	goatvr_source_num_buttons
-	goatvr_source_position
-	goatvr_source_orientation
-	goatvr_source_matrix
+	goatvr_head_position
+	goatvr_head_orientation
+	goatvr_hand_position
+	goatvr_hand_orientation
+	goatvr_gesture
+	goatvr_num_buttons
+	goatvr_button_state
+	goatvr_lookup_button
+	goatvr_num_axes
+	goatvr_axis_value
+	goatvr_lookup_axis
+	goatvr_num_sticks
+	goatvr_stick_pos
+	goatvr_lookup_stick
 	goatvr_activate_module
 	goatvr_deactivate_module
 	goatvr_num_modules
-	goatvr_get_module
-	goatvr_find_module
-	goatvr_module_name
+	goatvr_module_type
 	goatvr_module_active
 	goatvr_module_usable
+	goatvr_module_headtracking
+	goatvr_module_handtracking
+	goatvr_module_num_buttons
+	goatvr_module_num_axes
+	goatvr_module_num_sticks
 	goatvr_get_eye_height
 	goatvr_get_user_gender
 	goatvr_util_quat_to_matrix
