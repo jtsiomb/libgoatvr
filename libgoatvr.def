@@ -27,6 +27,8 @@ EXPORTS
 	goatvr_get_fb_texture_height
 	goatvr_get_fbo
 	goatvr_viewport
+	goatvr_view_matrix
+	goatvr_projection_matrix
 	goatvr_draw_start
 	goatvr_draw_eye
 	goatvr_draw_done
