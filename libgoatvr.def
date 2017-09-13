@@ -35,8 +35,10 @@ EXPORTS
 	goatvr_should_swap
 	goatvr_head_position
 	goatvr_head_orientation
+	goatvr_head_matrix
 	goatvr_hand_position
 	goatvr_hand_orientation
+	goatvr_hand_matrix
 	goatvr_gesture
 	goatvr_num_buttons
 	goatvr_button_state
