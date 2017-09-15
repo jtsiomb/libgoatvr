@@ -81,8 +81,6 @@ quit:
 
 static int init(void)
 {
-	int i;
-
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glGetError();	// ignore error if we don't have the extension
 	glEnable(GL_DEPTH_TEST);
@@ -107,6 +105,10 @@ static int init(void)
 	 */
 	goatvr_set_origin_mode(GOATVR_HEAD);
 	goatvr_startvr();
+	if(!goatvr_invr()) {
+		fprintf(stderr, "failed to ENTER VIRTUAL REALITY!\n");
+		return -1;
+	}
 	/* NOTE: this is important. goatvr_should_swap tells us if the current VR module
 	 * leaves backbuffer swapping to us (and we should call SDL_GL_SwapWindow) or
 	 * handles the swapchain itself.

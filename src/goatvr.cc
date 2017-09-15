@@ -97,7 +97,7 @@ void goatvr_startvr()
 		return;
 	}
 
-	start();
+	if(!start()) return;
 	in_vr = true;
 
 	// make sure any changes done while not in VR make it through to the module
@@ -186,7 +186,7 @@ float goatvr_get_fb_scale()
 {
 	if(display_module) {
 		RenderTexture *rtex = display_module->get_render_texture();
-		return rtex->fbscale;
+		return rtex ? rtex->fbscale : 1.0f;
 	}
 	return cur_fbscale;
 }
@@ -195,7 +195,7 @@ int goatvr_get_fb_width()
 {
 	if(display_module) {
 		RenderTexture *rtex = display_module->get_render_texture();
-		return rtex->width;
+		return rtex ? rtex->width : 0;
 	}
 	return cur_fbwidth;
 }
@@ -204,7 +204,7 @@ int goatvr_get_fb_height()
 {
 	if(display_module) {
 		RenderTexture *rtex = display_module->get_render_texture();
-		return rtex->height;
+		return rtex ? rtex->height : 0;
 	}
 	return cur_fbheight;
 }
@@ -213,7 +213,7 @@ int goatvr_get_fb_eye_width(int eye)
 {
 	if(display_module) {
 		RenderTexture *rtex = display_module->get_render_texture();
-		return rtex->eye_width[eye];
+		return rtex ? rtex->eye_width[eye] : 0;
 	}
 	return cur_fbwidth / 2;
 }
@@ -222,7 +222,7 @@ int goatvr_get_fb_eye_height(int eye)
 {
 	if(display_module) {
 		RenderTexture *rtex = display_module->get_render_texture();
-		return rtex->eye_height[eye];
+		return rtex ? rtex->eye_height[eye] : 0;
 	}
 	return cur_fbheight;
 }
@@ -231,7 +231,7 @@ int goatvr_get_fb_eye_xoffset(int eye)
 {
 	if(display_module) {
 		RenderTexture *rtex = display_module->get_render_texture();
-		return rtex->eye_xoffs[eye];
+		return rtex ? rtex->eye_xoffs[eye] : 0;
 	}
 	return eye == GOATVR_LEFT ? 0 : cur_fbwidth / 2;
 }
@@ -240,7 +240,7 @@ int goatvr_get_fb_eye_yoffset(int eye)
 {
 	if(display_module) {
 		RenderTexture *rtex = display_module->get_render_texture();
-		return rtex->eye_yoffs[eye];
+		return rtex ? rtex->eye_yoffs[eye] : 0;
 	}
 	return 0;
 }
@@ -249,7 +249,7 @@ unsigned int goatvr_get_fb_texture()
 {
 	if(display_module) {
 		RenderTexture *rtex = display_module->get_render_texture();
-		return rtex->tex;
+		return rtex ? rtex->tex : 0;
 	}
 	return 0;
 }
@@ -258,7 +258,7 @@ int goatvr_get_fb_texture_width()
 {
 	if(display_module) {
 		RenderTexture *rtex = display_module->get_render_texture();
-		return rtex->tex_width;
+		return rtex ? rtex->tex_width : 0;
 	}
 	return next_pow2(cur_fbwidth);
 }
@@ -267,7 +267,7 @@ int goatvr_get_fb_texture_height()
 {
 	if(display_module) {
 		RenderTexture *rtex = display_module->get_render_texture();
-		return rtex->tex_height;
+		return rtex ? rtex->tex_height : 0;
 	}
 	return next_pow2(cur_fbheight);
 }

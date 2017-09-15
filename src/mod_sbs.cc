@@ -63,7 +63,7 @@ bool ModuleSBS::detect()
 	return true;
 }
 
-void ModuleSBS::start()
+bool ModuleSBS::start()
 {
 	if(win_width == -1) {
 		int vp[4];
@@ -71,6 +71,7 @@ void ModuleSBS::start()
 		win_width = vp[2] + vp[0];
 		win_height = vp[3] + vp[1];
 	}
+	return true;
 }
 
 void ModuleSBS::set_origin_mode(goatvr_origin_mode mode)

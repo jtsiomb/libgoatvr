@@ -62,7 +62,7 @@ public:
 
 	bool detect();
 
-	void start();
+	bool start();
 	void stop();
 
 	void update();

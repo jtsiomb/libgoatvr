@@ -63,7 +63,7 @@ public:
 	virtual void deactivate();
 	virtual bool active() const;
 
-	virtual void start();
+	virtual bool start();
 	virtual void stop();
 
 	virtual void update();

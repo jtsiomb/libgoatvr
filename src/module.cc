@@ -76,8 +76,9 @@ bool Module::active() const
 	return act;
 }
 
-void Module::start()
+bool Module::start()
 {
+	return true;
 }
 
 void Module::stop()

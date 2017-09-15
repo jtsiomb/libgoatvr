@@ -93,13 +93,13 @@ bool ModuleOculus::detect()
 	return true;
 }
 
-void ModuleOculus::start()
+bool ModuleOculus::start()
 {
-	if(ovr) return;		// already started
+	if(ovr) return true;		// already started
 
 	if(ovr_Create(&ovr, &ovr_luid) != 0) {
 		print_error("failed to create oculus session\n");
-		return;
+		return false;
 	}
 
 	hmd = ovr_GetHmdDesc(ovr);
@@ -107,7 +107,7 @@ void ModuleOculus::start()
 		print_error("failed to start, no HMD available!\n");
 		ovr_Destroy(ovr);
 		ovr = 0;
-		return;
+		return false;
 	}
 
 	// force creation of the render target when start is called
@@ -117,6 +117,7 @@ void ModuleOculus::start()
 	printf("ctlmask: %u\n", ctlmask);
 
 	have_touch = ctlmask & ovrControllerType_Touch;
+	return true;
 }
 
 void ModuleOculus::stop()

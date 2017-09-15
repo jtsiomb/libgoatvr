@@ -28,6 +28,7 @@ static struct {
 	{ "oculus", 128 },
 	{ "openvr", 127 },
 	{ "oculus_old", 126 },
+	{ "openhmd", 125 },
 	{ "stereo", 64 },
 	{ "anaglyph", 63},
 	{ "sbs", 62},
@@ -127,11 +128,15 @@ void deactivate(Module *m)
 	active.erase(m);
 }
 
-void start()
+bool start()
 {
 	for(Module *m : active) {
-		m->start();
+		if(!m->start() && m->get_type() == GOATVR_DISPLAY_MODULE) {
+			display_module = 0;	// TODO fallback to the next available display module?
+			return false;
+		}
 	}
+	return true;
 }
 
 void stop()

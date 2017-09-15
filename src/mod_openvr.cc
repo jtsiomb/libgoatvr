@@ -87,21 +87,21 @@ bool ModuleOpenVR::detect()
 	return true;
 }
 
-void ModuleOpenVR::start()
+bool ModuleOpenVR::start()
 {
-	if(vr) return;	// already started
+	if(vr) return true;	// already started
 
 	EVRInitError vrerr;
 	if(!(vr = VR_Init(&vrerr, VRApplication_Scene))) {
 		print_error("failed to initialize OpenVR: %s\n",
 			VR_GetVRInitErrorAsEnglishDescription(vrerr));
-		return;
+		return false;
 	}
 	if(!(vrcomp = VRCompositor())) {
 		print_error("failed to initialize OpenVR compositor\n");
 		VR_Shutdown();
 		vr = 0;
-		return;
+		return false;
 	}
 
 	// grab the eye to HMD matrices
@@ -123,6 +123,7 @@ void ModuleOpenVR::start()
 
 	// force creation of the render target when start is called
 	get_render_texture();
+	return true;
 }
 
 void ModuleOpenVR::stop()

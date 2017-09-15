@@ -106,19 +106,19 @@ bool ModuleOculusOld::detect()
 	return true;
 }
 
-void ModuleOculusOld::start()
+bool ModuleOculusOld::start()
 {
-	if(hmd) return;		// already started
+	if(hmd) return true;		// already started
 
 	if(fakehmd) {
 		if(!(hmd = ovrHmd_CreateDebug(fakehmd))) {
 			print_error("failed to create oculus debug HMD\n");
-			return;
+			return false;
 		}
 	} else {
 		if(!(hmd = ovrHmd_Create(0))) {
 			print_error("failed to create oculus HMD\n");
-			return;
+			return false;
 		}
 	}
 
@@ -177,6 +177,7 @@ void ModuleOculusOld::start()
 	get_render_texture();
 
 	ovrHmd_DismissHSWDisplay(hmd);
+	return true;
 }
 
 void ModuleOculusOld::stop()

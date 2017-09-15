@@ -84,14 +84,15 @@ bool ModuleSpaceball::detect()
 	return false;
 }
 
-void ModuleSpaceball::start()
+bool ModuleSpaceball::start()
 {
-	if(fd >= 0) return;
+	if(fd >= 0) return true;
 
 	if((fd = spnav_open()) < 0) {
 		print_error("failed to open connection to the spacenav daemon\n");
-		return;
+		return false;
 	}
+	return true;
 }
 
 void ModuleSpaceball::stop()
@@ -104,6 +105,8 @@ void ModuleSpaceball::stop()
 
 void ModuleSpaceball::update()
 {
+	if(fd < 0) return;
+
 	bool xform_dirty = false;
 	spnav_event ev;
 

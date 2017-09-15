@@ -42,7 +42,7 @@ public:
 	const char *get_name() const;
 
 	bool detect();
-	void start();
+	bool start();
 
 	void set_origin_mode(goatvr_origin_mode mode);
 

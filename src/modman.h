@@ -40,7 +40,7 @@ void activate(Module *m);
 void deactivate(Module *m);
 
 // vr operations to be performed on all active modules
-void start();
+bool start();
 void stop();
 void update();
 
