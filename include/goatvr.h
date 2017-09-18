@@ -40,6 +40,8 @@ enum goatvr_user_gender {
 enum {
 	GOATVR_GESTURE_GRAB,
 	GOATVR_GESTURE_POINT,
+	GOATVR_GESTURE_THUMB,
+	GOATVR_GESTURE_BIRD,
 	GOATVR_GESTURE_TRIGGER,
 	GOATVR_GESTURE_FIST,
 	GOATVR_GESTURE_NAV,
@@ -162,7 +164,7 @@ float *goatvr_hand_matrix(int hand);
 
 /* Check for high-level hand gestures. The conditions under each of these is
  * triggered is module-specific. Also, multiple gestures may be true at once */
-int goatvr_gesture(int gest, int hand);
+int goatvr_gesture(int hand, int gest);
 
 /* buttons on input devices */
 int goatvr_num_buttons(void);

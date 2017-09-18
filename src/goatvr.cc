@@ -416,7 +416,7 @@ float *goatvr_hand_matrix(int hand)
 	return ident_mat;
 }
 
-int goatvr_gesture(int gest, int hand)
+int goatvr_gesture(int hand, int gest)
 {
 	if(gest < 0 || gest >= GOATVR_NUM_GESTURES) {
 		return 0;

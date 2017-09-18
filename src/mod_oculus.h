@@ -46,6 +46,8 @@ protected:
 	PosRot eye[2];
 	Mat4 eye_inv_xform[2];
 
+	unsigned int bnstate, touchstate;
+
 	ovrMirrorTextureData *ovr_mirtex;
 	unsigned int mirtex;
 	int mirtex_width, mirtex_height;

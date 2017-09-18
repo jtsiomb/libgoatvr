@@ -10,6 +10,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include "goatvr.h"
+#include "font.h"
 
 static int init(void);
 static void cleanup(void);
@@ -227,6 +228,7 @@ static void draw_scene()
 		{0.8, 0.8, 0.8, 1},
 		{0.4, 0.3, 0.3, 1}
 	};
+	char text[128];
 
 	for(i=0; i<2; i++) {
 		glLightfv(GL_LIGHT0 + i, GL_POSITION, lpos[i]);
@@ -287,9 +289,42 @@ static void draw_scene()
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mcol);
 			draw_box(0.02, 0.02, 0.02, 1.0);
 
+			strcpy(text, i ? "right" : "left");
+			if(goatvr_gesture(i, GOATVR_GESTURE_GRAB)) {
+				strcat(text, " grab");
+			}
+			if(goatvr_gesture(i, GOATVR_GESTURE_POINT)) {
+				strcat(text, " point");
+			}
+			if(goatvr_gesture(i, GOATVR_GESTURE_TRIGGER)) {
+				strcat(text, " trig");
+			}
+			if(goatvr_gesture(i, GOATVR_GESTURE_FIST)) {
+				strcat(text, " fist");
+			}
+			if(goatvr_gesture(i, GOATVR_GESTURE_NAV)) {
+				strcat(text, " nav");
+			}
+			if(goatvr_gesture(i, GOATVR_GESTURE_THUMB)) {
+				strcat(text, " thumb");
+			}
+			if(goatvr_gesture(i, GOATVR_GESTURE_BIRD)) {
+				strcat(text, " bird");
+			}
+
+			glTranslatef(0, 0.05, 0);
+			glScalef(0.0025, 0.0025, 0.0025);
+			glColor3f(1, 1, 1);
+			draw_string(text, 0);
+
 			glPopMatrix();
 		}
 	}
+
+	glTranslatef(0, goatvr_get_eye_height(), -5);
+	glScalef(0.02, 0.02, 0.02);
+	glColor3f(0.5, 0.8, 0.5);
+	draw_string("GoatVR example", 0);
 }
 
 static void draw_box(float xsz, float ysz, float zsz, float norm_sign)

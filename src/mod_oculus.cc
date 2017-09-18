@@ -173,6 +173,28 @@ void ModuleOculus::update()
 	}
 
 	// TODO check the state of buttons and axes on hand controllers
+	ovrInputState inpst;
+	ovr_GetInputState(ovr, ovrControllerType_Active, &inpst);
+
+	bnstate = inpst.Buttons;
+	touchstate = inpst.Touches;
+
+	unsigned int bn_stick[] = {ovrButton_LThumb, ovrButton_RThumb};
+	unsigned int touch_point[] = {ovrTouch_LIndexPointing, ovrTouch_RIndexPointing};
+	unsigned int touch_thumb[] = {ovrTouch_LThumbUp, ovrTouch_RThumbUp};
+
+	for(int i=0; i<2; i++) {
+		bool grabbing = inpst.HandTrigger[i] >= 0.5;
+		bool pointing = inpst.Touches & touch_point[i];
+		bool thumbsup = inpst.Touches & touch_thumb[i];
+
+		set_gesture(GOATVR_GESTURE_TRIGGER, i, inpst.IndexTrigger[i] >= 0.5);
+		set_gesture(GOATVR_GESTURE_GRAB, i, grabbing);
+		set_gesture(GOATVR_GESTURE_POINT, i, pointing);
+		set_gesture(GOATVR_GESTURE_THUMB, i, thumbsup);
+		set_gesture(GOATVR_GESTURE_FIST, i, grabbing & !pointing & !thumbsup);
+		set_gesture(GOATVR_GESTURE_NAV, i, inpst.Buttons & bn_stick[i]);
+	}
 }
 
 void ModuleOculus::set_origin_mode(goatvr_origin_mode mode)
