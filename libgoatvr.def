@@ -39,7 +39,7 @@ EXPORTS
 	goatvr_hand_position
 	goatvr_hand_orientation
 	goatvr_hand_matrix
-	goatvr_gesture
+	goatvr_action
 	goatvr_num_buttons
 	goatvr_button_state
 	goatvr_lookup_button

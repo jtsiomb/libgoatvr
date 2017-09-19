@@ -45,8 +45,8 @@ static int fbo_width, fbo_height;
 
 static bool user_swap = true;
 
-// gesture state for each hand
-static bool gesture[GOATVR_NUM_GESTURES][2];
+// action state for each hand
+static bool action[GOATVR_NUM_ACTIONS][2];
 
 // user information
 static float user_eye_height = 1.65f;
@@ -416,12 +416,12 @@ float *goatvr_hand_matrix(int hand)
 	return ident_mat;
 }
 
-int goatvr_gesture(int hand, int gest)
+int goatvr_action(int hand, int act)
 {
-	if(gest < 0 || gest >= GOATVR_NUM_GESTURES) {
+	if(act < 0 || act >= GOATVR_NUM_ACTIONS) {
 		return 0;
 	}
-	return gesture[gest][hand];
+	return action[act][hand];
 }
 
 int goatvr_num_buttons(void)
@@ -631,9 +631,9 @@ int goatvr_util_invert_matrix(float *inv, const float *mat)
 
 }	// extern "C"
 
-void goatvr::set_gesture(int which, int hand, bool value)
+void goatvr::set_action(int which, int hand, bool value)
 {
-	gesture[which][hand] = value;
+	action[which][hand] = value;
 }
 
 void goatvr::set_user_eye_height(float height)

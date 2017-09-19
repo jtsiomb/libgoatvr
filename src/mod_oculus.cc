@@ -188,12 +188,12 @@ void ModuleOculus::update()
 		bool pointing = inpst.Touches & touch_point[i];
 		bool thumbsup = inpst.Touches & touch_thumb[i];
 
-		set_gesture(GOATVR_GESTURE_TRIGGER, i, inpst.IndexTrigger[i] >= 0.5);
-		set_gesture(GOATVR_GESTURE_GRAB, i, grabbing);
-		set_gesture(GOATVR_GESTURE_POINT, i, pointing);
-		set_gesture(GOATVR_GESTURE_THUMB, i, thumbsup);
-		set_gesture(GOATVR_GESTURE_FIST, i, grabbing & !pointing & !thumbsup);
-		set_gesture(GOATVR_GESTURE_NAV, i, inpst.Buttons & bn_stick[i]);
+		set_action(GOATVR_ACTION_TRIGGER, i, inpst.IndexTrigger[i] >= 0.5);
+		set_action(GOATVR_ACTION_GRAB, i, grabbing);
+		set_action(GOATVR_ACTION_POINT, i, pointing);
+		set_action(GOATVR_ACTION_THUMB, i, thumbsup);
+		set_action(GOATVR_ACTION_FIST, i, grabbing & !pointing & !thumbsup);
+		set_action(GOATVR_ACTION_NAV, i, inpst.Buttons & bn_stick[i]);
 	}
 }
 

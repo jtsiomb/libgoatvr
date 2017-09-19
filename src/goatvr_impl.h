@@ -38,8 +38,8 @@ struct PosRot {
 	Mat4 xform;
 };
 
-/* called by the module update function when a gesture is detected */
-void set_gesture(int which, int hand, bool value);
+/* called by the module update function when a action is detected */
+void set_action(int which, int hand, bool value);
 
 void set_user_eye_height(float height);
 void set_user_gender(goatvr_user_gender gender);
