@@ -47,6 +47,7 @@ protected:
 	Mat4 eye_inv_xform[2];
 
 	unsigned int bnstate, touchstate;
+	Vec2 stick_pos[2];
 
 	ovrMirrorTextureData *ovr_mirtex;
 	unsigned int mirtex;

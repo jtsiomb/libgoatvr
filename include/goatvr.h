@@ -117,7 +117,9 @@ int goatvr_get_fb_texture_width(void);
 int goatvr_get_fb_texture_height(void);
 
 /* get the framebuffer object used as a VR render target. If an FBO wasn't
- * explicitly set with goatvr_set_fbo, then one is created automatically */
+ * explicitly set with goatvr_set_fbo, then one is created automatically,
+ * for the modules which need an FBO.
+ */
 unsigned int goatvr_get_fbo(void);
 
 /* call glViewport for this eye */
@@ -181,7 +183,7 @@ int goatvr_lookup_axis(const char *name);
 
 /* pairs of axes might be grouped in 2D "sticks", and queried by calling
  * goatvr_stick_pos with the stick index, and a pointer to an array of two
- * floats. The function reutrns whether the stick is pressed or not. */
+ * floats. The function returns whether the stick is pressed or not. */
 int goatvr_num_sticks(void);
 const char *goatvr_stick_name(int stick);
 void goatvr_stick_pos(int stick, float *pos);

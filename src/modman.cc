@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 #include <algorithm>
 #include "modman.h"
+#include "inpman.h"
 
 static struct {
 	const char *name;
@@ -135,6 +136,7 @@ bool start()
 			display_module = 0;	// TODO fallback to the next available display module?
 			return false;
 		}
+		inp_add_module(m);
 	}
 	return true;
 }
@@ -142,6 +144,7 @@ bool start()
 void stop()
 {
 	for(Module *m : active) {
+		inp_remove_module(m);
 		m->stop();
 	}
 }

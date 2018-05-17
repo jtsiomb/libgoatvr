@@ -1,6 +1,6 @@
 /*
 GoatVR - a modular virtual reality abstraction library
-Copyright (C) 2014-2017  John Tsiombikas <nuclear@member.fsf.org>
+Copyright (C) 2014-2018  John Tsiombikas <nuclear@member.fsf.org>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -194,6 +194,9 @@ void ModuleOculus::update()
 		set_action(GOATVR_ACTION_THUMB, i, thumbsup);
 		set_action(GOATVR_ACTION_FIST, i, grabbing & !pointing & !thumbsup);
 		set_action(GOATVR_ACTION_NAV, i, inpst.Buttons & bn_stick[i]);
+
+		stick_pos[i].x = inpst.Thumbstick[i].x;
+		stick_pos[i].y = inpst.Thumbstick[i].y;
 	}
 }
 
@@ -247,32 +250,54 @@ unsigned int ModuleOculus::get_button_state(unsigned int mask) const
 
 int ModuleOculus::num_axes() const
 {
-	return 0;	// TODO
+	return 4;
 }
 
 const char *ModuleOculus::get_axis_name(int axis) const
 {
-	return 0;	// TODO
+	switch(axis) {
+	case 0:
+		return "left thumbstick x";
+	case 1:
+		return "left thumbstick y";
+	case 2:
+		return "right thumbstick x";
+	case 3:
+		return "right thumbstick y";
+	default:
+		break;
+	}
+	return 0;
 }
 
 float ModuleOculus::get_axis_value(int axis) const
 {
-	return 0.0f;	// TODO
+	int stick = axis / 2;
+	int elem = axis % 2;
+	return get_stick_pos(stick)[elem];
 }
 
 int ModuleOculus::num_sticks() const
 {
-	return 0;	// TODO
+	return 2;
 }
 
 const char *ModuleOculus::get_stick_name(int stick) const
 {
-	return 0;	// TODO
+	switch(stick) {
+	case 0:
+		return "left thumbstick";
+	case 1:
+		return "right thumbstick";
+	default:
+		break;
+	}
+	return 0;
 }
 
 Vec2 ModuleOculus::get_stick_pos(int stick) const
 {
-	return Vec2(0, 0);	// TODO
+	return stick_pos[stick];
 }
 
 void ModuleOculus::set_fbsize(int width, int height, float fbscale)
