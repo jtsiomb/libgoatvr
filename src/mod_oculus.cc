@@ -172,12 +172,14 @@ void ModuleOculus::update()
 		}
 	}
 
-	// TODO check the state of buttons and axes on hand controllers
+	// check the state of buttons and axes on hand controllers
 	ovrInputState inpst;
 	ovr_GetInputState(ovr, ovrControllerType_Active, &inpst);
 
-	bnstate = inpst.Buttons;
-	touchstate = inpst.Touches;
+	// compact button bitmask to remove the gaps
+	bnstate = (inpst.Buttons & 0xf) | ((inpst.Buttons & 0xf00) >> 4) |
+		((inpst.Buttons & 0xffff0000) >> 8);
+	touchstate = inpst.Touches;	// TODO handle touches
 
 	unsigned int bn_stick[] = {ovrButton_LThumb, ovrButton_RThumb};
 	unsigned int touch_point[] = {ovrTouch_LIndexPointing, ovrTouch_RIndexPointing};
@@ -235,17 +237,58 @@ bool ModuleOculus::hand_active(int hand) const
 
 int ModuleOculus::num_buttons() const
 {
-	return 0;	// TODO
+	return 17;
 }
+
+enum {
+	BN_A			= 0,
+	BN_B			= 1,
+	BN_RSTICK		= 2,
+	BN_RSHOULDER	= 3,
+	BN_X			= 4,
+	BN_Y			= 5,
+	BN_LSTICK		= 6,
+	BN_LSHOULDER	= 7,
+	BN_UP			= 8,
+	BN_DOWN			= 9,
+	BN_LEFT			= 10,
+	BN_RIGHT		= 11,
+	BN_ENTER		= 12,
+	BN_BACK			= 13,
+	BN_VOLUP		= 14,
+	BN_VOLDOWN		= 15,
+	BN_HOME			= 16
+};
 
 const char *ModuleOculus::get_button_name(int bn) const
 {
-	return 0;	// TODO
+	switch(bn) {
+	case 0: return "A";
+	case 1: return "B";
+	case 2: return "right thumbstick";
+	case 3: return "right shoulder";
+	case 4: return "X";
+	case 5: return "Y";
+	case 6: return "left thumbstick";
+	case 7: return "left shoulder";
+	case 8: return "up";
+	case 9: return "down";
+	case 10: return "left";
+	case 11: return "right";
+	case 12: return "enter";
+	case 13: return "back";
+	case 14: return "volume up";
+	case 15: return "volume down";
+	case 16: return "home";
+	default:
+		break;
+	}
+	return 0;
 }
 
 unsigned int ModuleOculus::get_button_state(unsigned int mask) const
 {
-	return 0;	// TODO
+	return bnstate;
 }
 
 int ModuleOculus::num_axes() const

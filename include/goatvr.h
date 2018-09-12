@@ -183,7 +183,7 @@ int goatvr_lookup_axis(const char *name);
 
 /* pairs of axes might be grouped in 2D "sticks", and queried by calling
  * goatvr_stick_pos with the stick index, and a pointer to an array of two
- * floats. The function returns whether the stick is pressed or not. */
+ * floats. */
 int goatvr_num_sticks(void);
 const char *goatvr_stick_name(int stick);
 void goatvr_stick_pos(int stick, float *pos);

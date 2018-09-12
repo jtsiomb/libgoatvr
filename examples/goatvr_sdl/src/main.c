@@ -217,7 +217,7 @@ static void draw(void)
 
 static void draw_scene()
 {
-	int i;
+	int i, num_buttons, row, column, num_sticks;
 	float grey[] = {0.8, 0.8, 0.8, 1};
 	float col[] = {0, 0, 0, 1};
 	float lpos[][4] = {
@@ -330,10 +330,76 @@ static void draw_scene()
 		}
 	}
 
-	glTranslatef(0, goatvr_get_eye_height(), -5);
+	glPushMatrix();
+	glTranslatef(0, goatvr_get_eye_height() + 1.5, -5);
 	glScalef(0.02, 0.02, 0.02);
 	glColor3f(0.5, 0.8, 0.5);
 	draw_string("GoatVR example", 0);
+	glPopMatrix();
+
+	/* draw buttons */
+	num_buttons = goatvr_num_buttons();
+	if(num_buttons > 0) {
+		glPushMatrix();
+		glTranslatef(0, goatvr_get_eye_height() + 1, -5.5);
+		glScalef(0.0075, 0.0075, 0.0075);
+		glColor3f(0.8, 0.4, 0.8);
+		draw_string("Button state", 0);
+
+		glTranslatef(-220, 0, 0);
+		row = 0;
+		column = 0;
+		for(i=0; i<num_buttons; i++) {
+			int st = goatvr_button_state(i);
+
+			if(i == num_buttons / 2) {
+				row = 0;
+				column = 1;
+			}
+
+			glPushMatrix();
+			glTranslatef(column * 300.0f, -(++row) * 20.0f, 0);
+			if(st) {
+				glColor3f(0.8, 0.8, 0.8);
+			} else {
+				glColor3f(0.3, 0.3, 0.3);
+			}
+			draw_string(goatvr_button_name(i), -1);
+			glPopMatrix();
+		}
+		glPopMatrix();
+	}
+
+	/* draw sticks */
+	num_sticks = goatvr_num_sticks();
+	for(i=0; i<num_sticks; i++) {
+		float pos[2];
+		float mcol[] = {0.8, 0.8, 0.8, 1};
+
+		float x = 3.0 * ((float)i / (float)(num_sticks - 1) - 0.5);
+
+		glPushMatrix();
+		glTranslatef(x, 0, -4);
+
+		goatvr_stick_pos(i, pos);
+
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mcol);
+
+		glPushMatrix();
+		glRotatef(-pos[1] * 10, 1, 0, 0);
+		glRotatef(-pos[0] * 10, 0, 0, 1);
+		glTranslatef(0, 0.5, 0);
+		draw_box(0.1, 1, 0.1, 1);
+		glPopMatrix();
+
+		glTranslatef(0, 0.05, 0.2);
+		glRotatef(-45, 1, 0, 0);
+		glScalef(0.0075, 0.0075, 0.0075);
+
+		glColor3f(0.8, 0.6, 0.4);
+		draw_string(goatvr_stick_name(i), 0);
+		glPopMatrix();
+	}
 }
 
 static void draw_box(float xsz, float ysz, float zsz, float norm_sign)

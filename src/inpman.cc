@@ -15,9 +15,9 @@ static std::map<std::string, InputStick*> stick_map;
 
 void inp_add_module(Module *mod)
 {
-	int num = mod->num_buttons();
+	int num_bn = mod->num_buttons();
 	int base = (int)buttons.size();
-	for(int i=0; i<num; i++) {
+	for(int i=0; i<num_bn; i++) {
 		InputButton bn;
 		bn.idx = i + base;
 		bn.module = mod;
@@ -28,9 +28,9 @@ void inp_add_module(Module *mod)
 		bn_map[bn.name] = &buttons[base + i];
 	}
 
-	num = mod->num_axes();
+	int num_ax = mod->num_axes();
 	base = (int)axes.size();
-	for(int i=0; i<num; i++) {
+	for(int i=0; i<num_ax; i++) {
 		InputAxis axis;
 		axis.idx = i + base;
 		axis.module = mod;
@@ -41,9 +41,9 @@ void inp_add_module(Module *mod)
 		axis_map[axis.name] = &axes[base + i];
 	}
 
-	num = mod->num_sticks();
+	int num_st = mod->num_sticks();
 	base = (int)sticks.size();
-	for(int i=0; i<num; i++) {
+	for(int i=0; i<num_st; i++) {
 		InputStick stick;
 		stick.idx = i + base;
 		stick.module = mod;
@@ -53,6 +53,9 @@ void inp_add_module(Module *mod)
 
 		stick_map[stick.name] = &sticks[base + i];
 	}
+
+	printf("goatvr: added input module with %d buttons, %d axes, and %d sticks\n",
+			num_bn, num_ax, num_st);
 }
 
 void inp_remove_module(Module *mod)
