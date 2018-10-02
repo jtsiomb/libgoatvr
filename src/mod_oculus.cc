@@ -431,6 +431,7 @@ RenderTexture *ModuleOculus::get_render_texture()
 		int new_mtex_height = next_pow2(win_height);
 		if(!ovr_mirtex || mirtex_width != new_mtex_width || mirtex_height != new_mtex_height) {
 			ovrMirrorTextureDesc desc;
+			memset(&desc, 0, sizeof desc);
 			desc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
 			desc.Width = new_mtex_width;
 			desc.Height = new_mtex_height;
