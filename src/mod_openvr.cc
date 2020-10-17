@@ -249,7 +249,7 @@ RenderTexture *ModuleOpenVR::get_render_texture()
 
 		// prepare the OpenVR texture and texture bounds structs
 		vr_tex.handle = (void*)rtex.tex;
-		vr_tex.eType = API_OpenGL;
+		vr_tex.eType = TextureType_OpenGL;
 		vr_tex.eColorSpace = ColorSpace_Linear;
 
 		float umax = (float)rtex.width / (float)rtex.tex_width;
@@ -331,7 +331,7 @@ void ModuleOpenVR::get_view_matrix(Mat4 &mat, int eye) const
 void ModuleOpenVR::get_proj_matrix(Mat4 &mat, int eye, float znear, float zfar) const
 {
 	EVREye openvr_eye = eye == GOATVR_LEFT ? Eye_Left : Eye_Right;
-	openvr_matrix4(mat, vr->GetProjectionMatrix(openvr_eye, znear, zfar, API_OpenGL));
+	openvr_matrix4(mat, vr->GetProjectionMatrix(openvr_eye, znear, zfar));
 }
 
 Vec3 ModuleOpenVR::get_head_position() const
