@@ -39,10 +39,10 @@ for arg; do
 		;;
 
 	--enable-module-*)
-		mod_`echo $arg | sed 's/--enable-module-//'`=true
+		eval mod_`echo $arg | sed 's/--enable-module-//'`=true
 		;;
 	--disable-module-*)
-		mod_`echo $arg | sed 's/--disable-module-//'`=false
+		eval mod_`echo $arg | sed 's/--disable-module-//'`=false
 		;;
 
 	--enable-examples)
@@ -115,6 +115,15 @@ if $mod_oculus_old; then
 fi
 printmod openvr $mod_openvr
 if $mod_openvr; then
+	# detect if we have the old version with vr->ResetSeatedZeroPose or a newer version
+	# with vrchap->ResetZeroPose(...)
+	cc -x c++ -o /dev/null $CFLAGS -c - 2>/dev/null <<EOF
+#include <openvr/openvr.h>
+void foo() { vr::VRChaperone()->ResetZeroPose(vr::TrackingUniverseSeated); }
+EOF
+	if [ $? != 0 ]; then
+		mod_def="$mod_def -DMOD_OPENVR_OLDRECENTER"
+	fi
 	mod_def="$mod_def -DUSE_MOD_OPENVR"
 	mod_libs="$mod_libs -lopenvr_api"
 fi

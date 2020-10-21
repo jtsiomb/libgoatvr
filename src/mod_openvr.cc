@@ -15,7 +15,6 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-// TODO needs updating
 #ifdef USE_MOD_OPENVR
 
 #include <string.h>
@@ -208,7 +207,11 @@ void ModuleOpenVR::set_origin_mode(goatvr_origin_mode mode)
 
 void ModuleOpenVR::recenter()
 {
+#ifdef MOD_OPENVR_OLDRECENTER
+	vr->ResetSeatedZeroPose();
+#else
 	vrchap->ResetZeroPose(TrackingUniverseSeated);
+#endif
 }
 
 bool ModuleOpenVR::have_headtracking() const
