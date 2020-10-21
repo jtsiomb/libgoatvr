@@ -16,3 +16,4 @@ CMakeFIles/
 Makefile
 *.cmake
 goatvr_sdl
+config.status
