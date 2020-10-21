@@ -1,0 +1,71 @@
+ccsrc = $(wildcard src/*.cc) reg_modules.cc
+obj = $(ccsrc:.cc=.o)
+dep = $(obj:.o=.d)
+
+abi = 1
+rev = 2
+
+lib_a = libgoatvr.a
+sodir = lib
+
+ifeq ($(sys), mingw)
+	lib_so = libgoatvr.dll
+	sharedopt = -shared
+	sodir = bin
+
+	libgl = -lopengl32
+else
+	ldname = libgoatvr.so
+	soname = $(ldname).$(abi)
+	lib_so = $(soname).$(rev)
+	sharedopt = -shared -Wl,-soname,$(soname)
+
+	libgl = -lGL
+endif
+
+CXXFLAGS = -pedantic -Wall -MMD -fPIC $(opt) $(dbg) $(CFLAGS_cfg) $(CFLAGS_mod) 
+LDFLAGS = $(LDFLAGS_cfg) $(LDFLAGS_mod) $(libgl) -lgmath -lm
+
+.PHONY: shared static
+shared: $(lib_so)
+static: $(lib_a)
+
+$(lib_so): $(obj)
+	$(CXX) -o $@ $(sharedopt) $(obj) $(LDFLAGS)
+
+$(lib_a): $(obj)
+	$(AR) rcs $@ $(obj)
+
+-include $(dep)
+
+.PHONY: clean
+clean:
+	rm -f $(obj) $(lib_so) $(lib_a)
+
+.PHONY: cleandep
+cleandep:
+	rm -f $(dep)
+
+.PHONY: install
+install: $(lib_so) $(lib_a)
+	mkdir -p $(DESTDIR)$(PREFIX)/lib $(DESTDIR)$(PREFIX)/$(sodir) $(DESTDIR)$(PREFIX)/include
+	cp include/goatvr.h $(DESTDIR)$(PREFIX)/include/goatvr.h
+	cp $(lib_a) $(DESTDIR)$(PREFIX)/lib/$(lib_a)
+	cp $(lib_so) $(DESTDIR)$(PREFIX)/$(sodir)/$(lib_so)
+	[ -n "$(ldname)" ] && \
+		cd $(DESTDIR)$(PREFIX)/$(sodir) && rm -f $(ldname) $(soname) && \
+		ln -s $(lib_so) $(soname) && \
+		ln -s $(soname) $(ldname) || true
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/include/goatvr.h
+	rm -f $(DESTDIR)$(PREFIX)/lib/$(lib_a)
+	rm -f $(DESTDIR)$(PREFIX)/$(sodir)/$(lib_so)
+	[ -n "$(ldname)" ] && \
+		rm -f $(DESTDIR)$(PREFIX)/$(sodir)/$(soname) && \
+		rm -f $(DESTDIR)$(PREFIX)/$(sodir)/$(ldname) || true
+
+.PHONY: examples
+examples:
+	$(MAKE) -C examples/goatvr_sdl

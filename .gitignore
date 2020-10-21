@@ -1,4 +1,5 @@
 *.o
+*.d
 *.swp
 build/
 build-mingw/

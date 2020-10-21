@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MOD_OPENVR_H_
 
 #include <gmath/gmath.h>
-#include <openvr.h>
+#include <openvr/openvr.h>
 #include "module.h"
 #include "rtex.h"
 
@@ -36,6 +36,7 @@ protected:
 
 	vr::IVRSystem *vr;
 	vr::IVRCompositor *vrcomp;
+	vr::IVRChaperone *vrchap;
 	vr::TrackedDevicePose_t vr_pose[vr::k_unMaxTrackedDeviceCount];
 	Mat4 xform[vr::k_unMaxTrackedDeviceCount];
 	bool xform_valid[vr::k_unMaxTrackedDeviceCount];

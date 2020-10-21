@@ -103,6 +103,12 @@ bool ModuleOpenVR::start()
 		vr = 0;
 		return false;
 	}
+	if(!(vrchap = VRChaperone())) {
+		print_error("failed to initialize OpenVR chaperone\n");
+		VR_Shutdown();
+		vr = 0;
+		return false;
+	}
 
 	// grab the eye to HMD matrices
 	for(int i=0; i<2; i++) {
@@ -202,7 +208,7 @@ void ModuleOpenVR::set_origin_mode(goatvr_origin_mode mode)
 
 void ModuleOpenVR::recenter()
 {
-	vr->ResetSeatedZeroPose();
+	vrchap->ResetZeroPose(TrackingUniverseSeated);
 }
 
 bool ModuleOpenVR::have_headtracking() const
