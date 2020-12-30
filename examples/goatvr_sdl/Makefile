@@ -13,7 +13,7 @@ else
 	goatvr_dep = libgoatvr.so
 endif
 
-CFLAGS = -pedantic -Wall -g -MMD `sdl2-config --cflags`
+CFLAGS = -pedantic -Wall -g -I../../include -MMD `sdl2-config --cflags`
 LDFLAGS = -L. -Wl,-rpath=$(shell pwd) -lgoatvr `sdl2-config --libs` $(lib_gl) -lm
 
 $(bin): $(obj) $(goatvr_dep)

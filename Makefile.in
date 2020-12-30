@@ -23,7 +23,7 @@ else
 	libgl = -lGL
 endif
 
-CXXFLAGS = -pedantic -Wall -MMD -fPIC $(opt) $(dbg) $(CFLAGS_cfg) $(CFLAGS_mod) 
+CXXFLAGS = -pedantic -Wall -MMD -fPIC -Iinclude $(opt) $(dbg) $(CFLAGS_cfg) $(CFLAGS_mod) 
 LDFLAGS = $(LDFLAGS_cfg) $(LDFLAGS_mod) $(libgl) -lgmath -lm
 
 .PHONY: shared static
